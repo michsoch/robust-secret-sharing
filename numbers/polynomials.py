@@ -4,24 +4,31 @@
 from custom_exceptions import exceptions
 
 
-def evaluate(coefficients, x, prime):
-    '''
-    Args:
-        coefficients: list representing a polynomial
-        x: the point at which to evaluate the polynomial
-        prime: arithmetic is done mod this prime
-    Returns:
-        the value of the polynomial at the given point x.
-    Raises:
-        IllegalArgumentException, does not accept empty coefficients
-    '''
+def get_polynomial(coefficients, prime):
     if (len(coefficients) == 0):
         raise exceptions.IllegalArgumentException
 
-    sum = 0
-    for i in range(len(coefficients)):
-        sum += (coefficients[i] * pow(x, i, prime)) % prime
-    return sum % prime
+    def P(x):
+        sum = 0
+        for i in range(len(coefficients)):
+            sum += (coefficients[i] * pow(x, i, prime)) % prime
+        return sum % prime
+    return P
+
+
+def evaluate(coefficients, xlist, prime):
+    '''
+    Args:
+        coefficients: a list holding the coefficients of the polynomial
+        xlist: a list of points at which to evaluate the polynomial
+        prime: arithmetic is done mod this prime
+    Returns:
+        a list of points, evaluated at the x values given
+    Raises:
+        IllegalArgumentException, does not accept empty coefficients
+    '''
+    f = get_polynomial(coefficients, prime)
+    return [(x, f(x)) for x in xlist]
 
 
 def interpolate(points, prime):
@@ -34,5 +41,12 @@ def interpolate(points, prime):
         the polynomial f (list of coefficients)
     Raises:
         IllegalArgumentException, does not accept empty points
+    See https://en.wikipedia.org/wiki/Lagrange_polynomial
     '''
+    # we have k data points, (x_0, y_0),...,(x_k, y_k)
+
+    # each l_j is formed as 
+
+
+    # the result is the sum from 0 to k of y_j * l_j
     pass
