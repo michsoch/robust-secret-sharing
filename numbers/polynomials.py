@@ -4,7 +4,33 @@
 from custom_exceptions import exceptions
 
 
+def egcd(a, b):
+    if a == 0:
+        return (b, 0, 1)
+    else:
+        g, y, x = egcd(b % a, a)
+        return (g, x - (b // a) * y, y)
+
+
+def inverse_mod(k, prime):
+    k = k % prime
+    if k < 0:
+        r = egcd(prime, -k)[2]
+    else:
+        r = egcd(prime, k)[2]
+    return (prime + r) % prime
+
+
 def get_polynomial(coefficients, prime):
+    '''
+    Args:
+        coefficients: a list of integers holding the coefficients of the polynomial
+        prime: arithmetic is done mod this prime
+    Returns:
+        P: a function that takes an integer x and returns the evaluation of the polynomial at that point
+    Raises:
+        IllegalArgumentException if passed an empty coefficients list
+    '''
     if (len(coefficients) == 0):
         raise exceptions.IllegalArgumentException
 
@@ -19,11 +45,11 @@ def get_polynomial(coefficients, prime):
 def evaluate(coefficients, xlist, prime):
     '''
     Args:
-        coefficients: a list holding the coefficients of the polynomial
-        xlist: a list of points at which to evaluate the polynomial
+        coefficients: a list of integers holding the coefficients of the polynomial
+        xlist: a list of integer points at which to evaluate the polynomial
         prime: arithmetic is done mod this prime
     Returns:
-        a list of points, evaluated at the x values given
+        a list of integer points, evaluated at the x values given
     Raises:
         IllegalArgumentException, does not accept empty coefficients
     '''
@@ -34,19 +60,33 @@ def evaluate(coefficients, xlist, prime):
 def interpolate(points, prime):
     '''
     Args:
-        points: list of size t + 1 of tuples, (x, f(x))
+        points: list of size t + 1 of tuples, (x, f(x)) where both values are integers
                 the algorithm assumes that exactly t + 1 points are provided
         prime: arithmetic is done mod this prime
     Returns:
-        the polynomial f (list of coefficients)
-    Raises:
-        IllegalArgumentException, does not accept empty points
+        P: a function that takes a value x and returns the evaluation of the polynomial at that point
+
     See https://en.wikipedia.org/wiki/Lagrange_polynomial
     '''
-    # we have k data points, (x_0, y_0),...,(x_k, y_k)
+    degree = len(points)
+    if (degree < 1):
+        raise exceptions.IllegalArgumentException
 
-    # each l_j is formed as 
+    # convert t + 1 data points, (x_0, y_0),...,(x_{t+1}, y_{t+1}) into lists of x and y
+    x_vals, y_vals = map(list, zip(*points))
 
+    def P(x):
+        basis = []
+        for j in range(degree):  # the jth basis is the product over m from 0 to degree with m != j
+            numerator, denominator = 1, 1   # of (x - x_m) / (x_j - x_m)
+            for m in range(j) + range(j + 1, degree):
+                numerator = (numerator * (x - x_vals[m])) % prime
+                denominator = (denominator * (x_vals[j] - x_vals[m])) % prime
+            basis.append((numerator * inverse_mod(denominator, prime)) % prime)
 
-    # the result is the sum from 0 to k of y_j * l_j
-    pass
+        # return the sum of the product of each y value which its corresponding basis polynomial
+        result = 0
+        for i in range(degree):
+            result += y_vals[i] * basis[i]
+        return result % prime
+    return P
