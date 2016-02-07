@@ -1,5 +1,5 @@
 import pytest
-from custom_exceptions import exceptions
+from customexceptions import custom_exceptions
 import numbers.polynomials
 
 
@@ -274,7 +274,7 @@ def test_evaluate_empty_coef():
     polynomial = []
     xlist = [12]
     p = 71
-    with pytest.raises(exceptions.IllegalArgumentException):
+    with pytest.raises(custom_exceptions.IllegalArgumentException):
         numbers.polynomials.evaluate(polynomial, xlist, p)
 
 
@@ -283,5 +283,5 @@ def test_evaluate_empty_coef():
 def test_interpolate_empty_points():
     points = []
     p = 71
-    with pytest.raises(exceptions.IllegalArgumentException):
+    with pytest.raises(custom_exceptions.IllegalArgumentException):
         numbers.polynomials.interpolate(points, p)
