@@ -18,4 +18,5 @@ class FatalConfigurationError(Exception):
         n or s (the secret) are too large to allow for a prime value to be selected for sharing
         t + 1 (the degree of the polynomial) is so large that we cannot select enough coefficients
             given the size of the secret and chosen prime
+        t + 1 is greater than or equal to n
     '''

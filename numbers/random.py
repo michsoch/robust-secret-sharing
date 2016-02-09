@@ -29,6 +29,16 @@ def get_distinct_random_ints_in_field(num, prime):
     return random_values
 
 
+def convert_bytestring_to_int(bytestring):
+    # TODO: test
+    return int(codecs.encode(bytestring, 'hex'), 16)
+
+
+def convert_int_to_bytestring():
+    # TODO: write and test
+    pass
+
+
 def get_random_int(bytelength):
     '''
     Args:
@@ -41,4 +51,4 @@ def get_random_int(bytelength):
         https://docs.python.org/3/library/os.html#os.urandom
         https://cryptography.io/en/latest/random-numbers/
     '''
-    return int(codecs.encode(os.urandom(bytelength), 'hex'), 16)
+    return convert_bytestring_to_int(os.urandom(bytelength))
