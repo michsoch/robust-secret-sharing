@@ -1,6 +1,6 @@
 from customexceptions import custom_exceptions
 from schemes import sss
-from numbers import utilities, primes
+from crypto_tools import utilities, primes
 import pytest
 
 secret = 'x\x02e\x9c\x9e\x16\xe9\xea\x15+\xbf]\xebx;o\xef\xc9X1c\xaepj\xebj\x12\xe3r\xcd\xeaM'  # An example key
@@ -8,7 +8,8 @@ alt_secret = 'c4bbcb1fbec99d65bf59d85c8cb62ee2db963f0fe106f483d9afa73bd4e39a8a'
 
 
 def share_and_recover(num_players, reconstruction_threshold, secret, end):
-    prime = primes.get_prime_by_batch([num_players, secret])
+    bitlength = max(num_players, secret).bit_length()
+    prime = primes.get_prime_by_bitlength(bitlength)
 
     shares = sss.share_secret(num_players, reconstruction_threshold, secret, prime)
     return sss.reconstruct_secret(shares[:end], prime)
@@ -92,9 +93,10 @@ def test_2_of_2_sharing():
 def test_bad_configuration_threshold():
     num_players = 2
     reconstruction_threshold = 5
-    sharing_prime = primes.get_prime_by_batch([num_players, secret])
-
     secret_int = utilities.convert_bytestring_to_int(secret)
+
+    bitlength = max(num_players, secret_int).bit_length()
+    sharing_prime = primes.get_prime_by_bitlength(bitlength)
 
     with pytest.raises(custom_exceptions.FatalConfigurationError):
         sss.share_secret(num_players, reconstruction_threshold, secret_int, sharing_prime)
@@ -103,8 +105,9 @@ def test_bad_configuration_threshold():
 def test_bad_configuration_prime_small_secret():
     num_players = 5
     reconstruction_threshold = 2
-    sharing_prime = primes.get_prime_by_batch([num_players])  # prime = 7
     bad_secret_int = utilities.convert_bytestring_to_int('x\xFF\xFF')
+
+    sharing_prime = 7
 
     with pytest.raises(custom_exceptions.FatalConfigurationError):
         sss.share_secret(num_players, reconstruction_threshold, bad_secret_int, sharing_prime)
@@ -114,7 +117,8 @@ def test_bad_configuration_prime_small_num_players():
     bad_num_players = 40
     reconstruction_threshold = 2
     secret_int = 10
-    sharing_prime = primes.get_prime_by_batch([secret])  # prime = 31
+
+    sharing_prime = 31
 
     with pytest.raises(custom_exceptions.FatalConfigurationError):
         sss.share_secret(bad_num_players, reconstruction_threshold, secret_int, sharing_prime)

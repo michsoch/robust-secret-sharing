@@ -1,13 +1,13 @@
-from numbers import random, polynomials
+from crypto_tools import random, polynomials
 from customexceptions import custom_exceptions
 
 
 def verify_parameters(num_players, reconstruction_threshold, secret, sharing_prime):
     # TODO: chat about how this should be handled
-    return reconstruction_threshold <= num_players and \
-        sharing_prime is not None and \
-        secret < sharing_prime and \
-        num_players < sharing_prime
+    return reconstruction_threshold <= num_players \
+        and sharing_prime is not None \
+        and secret < sharing_prime \
+        and num_players < sharing_prime
 
 
 def share_secret(num_players, reconstruction_threshold, secret, sharing_prime):
@@ -18,7 +18,7 @@ def share_secret(num_players, reconstruction_threshold, secret, sharing_prime):
     alpha = [i for i in range(1, num_players + 1)]  # TODO: should these be picked arbitrarily to hide n?
 
     # choose at random t points, a_1,...,a_t in Z_ps (private)
-        # we will use the a values to define the polynomial f(x) = (a_t x^t) + ... + (a_1 x) + s
+        # we will use the a_i values as our coefficients to define the polynomial f(x) = (a_t x^t) + ... + (a_1 x) + s
     coefficients = [secret] + random.get_distinct_random_ints_in_field(reconstruction_threshold - 1, sharing_prime)
 
     # for values of i from 1 to n, calculate f(alpha_i)
