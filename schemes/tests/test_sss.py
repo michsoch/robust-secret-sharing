@@ -1,11 +1,10 @@
 from customexceptions import custom_exceptions
 from schemes import sss
-from numbers import random, primes
+from numbers import utilities, primes
 import pytest
 
-# TODO: some tests inspired by https://github.com/blockstack/secret-sharing/blob/master/unit_tests.py
-secret = random.convert_bytestring_to_int('x\x02e\x9c\x9e\x16\xe9\xea\x15+\xbf]\xebx;o\xef\xc9X1c\xaepj\xebj\x12\xe3r\xcd\xeaM')  # An example key
-alt_secret = random.convert_bytestring_to_int("c4bbcb1fbec99d65bf59d85c8cb62ee2db963f0fe106f483d9afa73bd4e39a8a")
+secret = 'x\x02e\x9c\x9e\x16\xe9\xea\x15+\xbf]\xebx;o\xef\xc9X1c\xaepj\xebj\x12\xe3r\xcd\xeaM'  # An example key
+alt_secret = 'c4bbcb1fbec99d65bf59d85c8cb62ee2db963f0fe106f483d9afa73bd4e39a8a'
 
 
 def share_and_recover(num_players, reconstruction_threshold, secret, end):
@@ -20,7 +19,9 @@ def test_min_shares():
     reconstruction_threshold = 2
     end = 2
 
-    recovered_secret = share_and_recover(num_players, reconstruction_threshold, secret, end)
+    secret_int = utilities.convert_bytestring_to_int(secret)
+
+    recovered_secret = utilities.convert_int_to_bytestring(share_and_recover(num_players, reconstruction_threshold, secret_int, end))
     assert recovered_secret == secret
 
 
@@ -29,7 +30,9 @@ def test_max_shares():
     reconstruction_threshold = 2
     end = num_players
 
-    recovered_secret = share_and_recover(num_players, reconstruction_threshold, secret, end)
+    secret_int = utilities.convert_bytestring_to_int(secret)
+
+    recovered_secret = utilities.convert_int_to_bytestring(share_and_recover(num_players, reconstruction_threshold, secret_int, end))
     assert recovered_secret == secret
 
 
@@ -39,9 +42,10 @@ def test_secret_with_leading_zeroes():
     end = 2
 
     # Create secret
-    trailing_zero_secret = random.convert_bytestring_to_int('\x00\x00e\x9c\x9e\x16\xe9\xea\x15+\xbf]\xebx;o\xef\xc9X1c\xaepj\xebj\x12\xe3r\xcd\xeaM')
+    trailing_zero_secret = '\x00\x00e\x9c\x9e\x16\xe9\xea\x15+\xbf]\xebx;o\xef\xc9X1c\xaepj\xebj\x12\xe3r\xcd\xeaM'
+    trailing_zero_secret_int = utilities.convert_bytestring_to_int(trailing_zero_secret)
 
-    recovered_secret = share_and_recover(num_players, reconstruction_threshold, trailing_zero_secret, end)
+    recovered_secret = utilities.convert_int_to_bytestring(share_and_recover(num_players, reconstruction_threshold, trailing_zero_secret_int, end))
     assert recovered_secret == trailing_zero_secret
 
 
@@ -49,7 +53,9 @@ def test_2_of_3_sharing():
     num_players = 3
     reconstruction_threshold = 2
 
-    recovered_secret = share_and_recover(num_players, reconstruction_threshold, alt_secret, reconstruction_threshold)
+    alt_secret_int = utilities.convert_bytestring_to_int(alt_secret)
+
+    recovered_secret = utilities.convert_int_to_bytestring(share_and_recover(num_players, reconstruction_threshold, alt_secret_int, reconstruction_threshold))
     assert recovered_secret == alt_secret
 
 
@@ -57,7 +63,9 @@ def test_4_of_7_sharing():
     num_players = 7
     reconstruction_threshold = 4
 
-    recovered_secret = share_and_recover(num_players, reconstruction_threshold, alt_secret, reconstruction_threshold)
+    alt_secret_int = utilities.convert_bytestring_to_int(alt_secret)
+
+    recovered_secret = utilities.convert_int_to_bytestring(share_and_recover(num_players, reconstruction_threshold, alt_secret_int, reconstruction_threshold))
     assert recovered_secret == alt_secret
 
 
@@ -65,7 +73,9 @@ def test_5_of_9_sharing():
     num_players = 9
     reconstruction_threshold = 5
 
-    recovered_secret = share_and_recover(num_players, reconstruction_threshold, alt_secret, reconstruction_threshold)
+    alt_secret_int = utilities.convert_bytestring_to_int(alt_secret)
+
+    recovered_secret = utilities.convert_int_to_bytestring(share_and_recover(num_players, reconstruction_threshold, alt_secret_int, reconstruction_threshold))
     assert recovered_secret == alt_secret
 
 
@@ -73,7 +83,9 @@ def test_2_of_2_sharing():
     num_players = 2
     reconstruction_threshold = 2
 
-    recovered_secret = share_and_recover(num_players, reconstruction_threshold, alt_secret, reconstruction_threshold)
+    alt_secret_int = utilities.convert_bytestring_to_int(alt_secret)
+
+    recovered_secret = utilities.convert_int_to_bytestring(share_and_recover(num_players, reconstruction_threshold, alt_secret_int, reconstruction_threshold))
     assert recovered_secret == alt_secret
 
 
@@ -82,28 +94,30 @@ def test_bad_configuration_threshold():
     reconstruction_threshold = 5
     sharing_prime = primes.get_prime_by_batch([num_players, secret])
 
+    secret_int = utilities.convert_bytestring_to_int(secret)
+
     with pytest.raises(custom_exceptions.FatalConfigurationError):
-        sss.share_secret(num_players, reconstruction_threshold, secret, sharing_prime)
+        sss.share_secret(num_players, reconstruction_threshold, secret_int, sharing_prime)
 
 
 def test_bad_configuration_prime_small_secret():
     num_players = 5
     reconstruction_threshold = 2
     sharing_prime = primes.get_prime_by_batch([num_players])  # prime = 7
-    bad_secret = random.convert_bytestring_to_int('x\xFF\xFF')
+    bad_secret_int = utilities.convert_bytestring_to_int('x\xFF\xFF')
 
     with pytest.raises(custom_exceptions.FatalConfigurationError):
-        sss.share_secret(num_players, reconstruction_threshold, bad_secret, sharing_prime)
+        sss.share_secret(num_players, reconstruction_threshold, bad_secret_int, sharing_prime)
 
 
 def test_bad_configuration_prime_small_num_players():
     bad_num_players = 40
     reconstruction_threshold = 2
-    secret = 10
+    secret_int = 10
     sharing_prime = primes.get_prime_by_batch([secret])  # prime = 31
 
     with pytest.raises(custom_exceptions.FatalConfigurationError):
-        sss.share_secret(bad_num_players, reconstruction_threshold, secret, sharing_prime)
+        sss.share_secret(bad_num_players, reconstruction_threshold, secret_int, sharing_prime)
 
 
 def test_bad_configuration_prime_none():
@@ -111,5 +125,7 @@ def test_bad_configuration_prime_none():
     reconstruction_threshold = 5
     sharing_prime = None
 
+    secret_int = utilities.convert_bytestring_to_int(secret)
+
     with pytest.raises(custom_exceptions.FatalConfigurationError):
-        sss.share_secret(num_players, reconstruction_threshold, secret, sharing_prime)
+        sss.share_secret(num_players, reconstruction_threshold, secret_int, sharing_prime)
