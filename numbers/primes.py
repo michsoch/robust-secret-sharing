@@ -1,6 +1,6 @@
 from customexceptions import custom_exceptions
 
-mersenne_prime_exponents = [2, 3, 5, 7, 13, 17, 19, 31, 61, 89, 107, 127, 521, 607, 1279,
+MERSENNE_PRIME_EXPONENTS = [2, 3, 5, 7, 13, 17, 19, 31, 61, 89, 107, 127, 521, 607, 1279,
                             2203, 2281, 3217, 4253, 4423]
 
 
@@ -11,13 +11,13 @@ def mersenne_primes():
     '''
     primes = []
 
-    for exp in mersenne_prime_exponents:
+    for exp in MERSENNE_PRIME_EXPONENTS:
         prime = 2**exp - 1
         primes.append(prime)
     return primes
 
 
-def get_prime_by_bitlength(size):
+def get_prime_by_bitlength(bitlength):
     '''
     Returns:
         a prime with strictly more bits than the specified size
@@ -25,11 +25,11 @@ def get_prime_by_bitlength(size):
     Raises:
         IllegalArgumentException, size is negative
     '''
-    if (size < 0):
+    if (bitlength < 0):
         raise custom_exceptions.IllegalArgumentException
 
-    for exp in mersenne_prime_exponents:
-        if exp > size:
+    for exp in MERSENNE_PRIME_EXPONENTS:
+        if exp > bitlength:
             return 2**exp - 1
     return None
 
