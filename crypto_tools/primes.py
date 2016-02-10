@@ -32,18 +32,3 @@ def get_prime_by_bitlength(bitlength):
         if exp > bitlength:
             return 2**exp - 1
     return None
-
-
-def get_prime_by_batch(batch):
-    '''
-    Returns:
-        a prime strictly larger than all values in the list provided in batch
-        or None if no such prime is found in hardcoded list
-    '''
-    max_item = max(batch)
-    primes = mersenne_primes()
-
-    for prime in primes:
-        if prime > max_item:
-            return prime
-    return None

@@ -1,6 +1,6 @@
 import pytest
 from customexceptions import custom_exceptions
-from numbers import random
+from crypto_tools import random
 
 
 def test_random_big_single():
