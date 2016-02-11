@@ -2,7 +2,7 @@ from crypto_tools import random, polynomials
 from customexceptions import custom_exceptions
 
 
-def verify_parameters(num_players, reconstruction_threshold, secret, prime):
+def _verify_parameters(num_players, reconstruction_threshold, secret, prime):
     '''
     Args:
         see arguments to share_secret
@@ -30,14 +30,14 @@ def share_secret(num_players, reconstruction_threshold, secret, prime):
     Raises:
         FatalConfigurationError, the input arguments fail validation
     '''
-    if (not verify_parameters(num_players, reconstruction_threshold, secret, prime)):
+    if (not _verify_parameters(num_players, reconstruction_threshold, secret, prime)):
         raise custom_exceptions.FatalConfigurationError
 
     # fix n distinct points, alpha_1,...,alpha_n in Z_ps  (public)
     alpha = [i for i in range(1, num_players + 1)]  # TODO: should these be picked arbitrarily to hide n?
 
     # choose at random t points, a_1,...,a_t in Z_ps (private)
-        # we will use the a_i values as our coefficients to define the polynomial f(x) = (a_t x^t) + ... + (a_1 x) + s
+    #   we will use the a_i values as our coefficients to define the polynomial f(x) = (a_t x^t) + ... + (a_1 x) + s
     coefficients = [secret] + random.get_distinct_random_ints_in_field(reconstruction_threshold - 1, prime)
 
     # for values of i from 1 to n, calculate f(alpha_i)

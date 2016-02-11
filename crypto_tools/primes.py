@@ -25,7 +25,7 @@ def get_prime_by_bitlength(bitlength):
     Raises:
         IllegalArgumentException, size is negative
     '''
-    if (bitlength < 0):
+    if bitlength < 0:
         raise custom_exceptions.IllegalArgumentException
 
     for exp in MERSENNE_PRIME_EXPONENTS:

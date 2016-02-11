@@ -1,6 +1,6 @@
 import codecs
 
-prepend = '\x7E'
+PREPEND = '\x7E'
 
 
 def convert_bytestring_to_int(bytestring):
@@ -11,7 +11,7 @@ def convert_bytestring_to_int(bytestring):
         an integer that can be passed to convert_int_to_bytestring
     '''
     # use the prepend value to preserve leading zeros in the bytestring
-    hex_string = codecs.encode(prepend + bytestring, 'hex')
+    hex_string = codecs.encode(PREPEND + bytestring, 'hex')
     return int(hex_string, 16)
 
 
@@ -29,4 +29,4 @@ def convert_int_to_bytestring(int_val):
         hex_string = hex_string.zfill(hex_len + 1)
 
     # strip prepend value added in convert_bytestring_to_int
-    return codecs.decode(hex_string, 'hex').lstrip(prepend)
+    return codecs.decode(hex_string, 'hex').lstrip(PREPEND)

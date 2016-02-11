@@ -6,6 +6,11 @@ from customexceptions import custom_exceptions
 
 
 def egcd(a, b):
+    '''
+    Implements the extended euclidean algorithm
+    Returns:
+        the tuple (g, x, y), such that ax + by = g = gcd(a, b)
+    '''
     if a == 0:
         return (b, 0, 1)
     else:
@@ -14,6 +19,10 @@ def egcd(a, b):
 
 
 def inverse_mod(k, prime):
+    '''
+    Returns:
+        the inverse mod of k within the field defined by the prime
+    '''
     k = k % prime
     if k < 0:
         r = egcd(prime, -k)[2]
@@ -32,7 +41,7 @@ def get_polynomial(coefficients, prime):
     Raises:
         IllegalArgumentException if passed an empty coefficients list
     '''
-    if (len(coefficients) == 0):
+    if len(coefficients) == 0:
         raise custom_exceptions.IllegalArgumentException
 
     def P(x):

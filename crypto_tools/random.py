@@ -15,7 +15,7 @@ def get_distinct_random_ints_in_field(num_ints, prime):
         FatalConfigurationError, cannot return the requested number of values given the upper bound
         EntropyNotFound, OS does not provide a source of entropy
     '''
-    if (num_ints > prime):  # we can never get num distinct integers in this field
+    if num_ints > prime:  # we can never get num distinct integers in this field
         raise custom_exceptions.FatalConfigurationError
 
     bitlength = prime.bit_length()
