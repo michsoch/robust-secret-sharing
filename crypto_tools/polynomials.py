@@ -34,7 +34,7 @@ def get_polynomial(coefficients, prime):
     Raises:
         ValueError, passed an empty coefficients list
     '''
-    if len(coefficients) == 0:
+    if len(coefficients) <= 1:
         raise ValueError("too few coefficients to construct a polynomial")
 
     def P(x):
@@ -74,7 +74,7 @@ def interpolate(points, prime):
     See https://en.wikipedia.org/wiki/Lagrange_polynomial
     '''
     degree = len(points)
-    if (degree < 1):
+    if (degree <= 1):
         raise ValueError("too few points to recover a polynomial")
 
     # convert t + 1 data points, (x_0, y_0),...,(x_{t+1}, y_{t+1}) into lists of x and y
