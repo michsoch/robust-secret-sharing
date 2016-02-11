@@ -28,7 +28,7 @@ def get_distinct_random_ints_in_field(num_ints, prime):
                 value = get_random_int(bytelength) % prime
             random_values.append(value)
         except NotImplementedError:
-            raise custom_exceptions.EntropyNotFound
+            raise ValueError("no found implementation for entropy")
     return random_values
 
 

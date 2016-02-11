@@ -1,5 +1,4 @@
 from crypto_tools import random, polynomials
-from customexceptions import custom_exceptions
 
 
 def _verify_parameters(num_players, reconstruction_threshold, secret, prime):
@@ -31,7 +30,7 @@ def share_secret(num_players, reconstruction_threshold, secret, prime):
         FatalConfigurationError, the input arguments fail validation
     '''
     if (not _verify_parameters(num_players, reconstruction_threshold, secret, prime)):
-        raise custom_exceptions.FatalConfigurationError
+        raise ValueError("invalid secret sharing parameters")
 
     # fix n distinct points, alpha_1,...,alpha_n in Z_ps  (public)
     alpha = [i for i in range(1, num_players + 1)]  # TODO: should these be picked arbitrarily to hide n?

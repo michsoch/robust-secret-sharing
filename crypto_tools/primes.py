@@ -1,5 +1,3 @@
-from customexceptions import custom_exceptions
-
 MERSENNE_PRIME_EXPONENTS = [2, 3, 5, 7, 13, 17, 19, 31, 61, 89, 107, 127, 521, 607, 1279,
                             2203, 2281, 3217, 4253, 4423]
 
@@ -26,9 +24,9 @@ def get_prime_by_bitlength(bitlength):
         IllegalArgumentException, size is negative
     '''
     if bitlength < 0:
-        raise custom_exceptions.IllegalArgumentException
+        raise ValueError("invalid bit-length for prime selection")
 
     for exp in MERSENNE_PRIME_EXPONENTS:
         if exp > bitlength:
             return 2**exp - 1
-    return None
+    raise ValueError("could not return a sufficiently large prime")
