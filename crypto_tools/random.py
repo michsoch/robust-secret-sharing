@@ -19,16 +19,14 @@ def get_distinct_random_ints_in_field(num_ints, prime):
 
     bitlength = prime.bit_length()
     bytelength = int(math.ceil((bitlength / 8.0)))  # round up bitlength to byteelength conversion
-    random_values = []
-    for i in xrange(num_ints):
+    random_values = set()
+    for i in xrange(num_ints):  # ensure distinct values
         try:
-            value = get_random_int(bytelength) % prime
-            while value in random_values:  # ensure distinct values
-                value = get_random_int(bytelength) % prime
-            random_values.append(value)
+            while len(random_values) < num_ints:
+                random_values.add(get_random_int(bytelength) % prime)
         except NotImplementedError:
             raise ValueError("no found implementation for entropy")
-    return random_values
+    return list(random_values)
 
 
 def get_random_int(bytelength):
