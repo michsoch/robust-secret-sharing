@@ -5,14 +5,10 @@ MERSENNE_PRIME_EXPONENTS = [2, 3, 5, 7, 13, 17, 19, 31, 61, 89, 107, 127, 521, 6
 def _mersenne_primes():
     '''
     Returns:
-        all the mersenne primes with less than 5000 digits.
+        a generator of all the predefined mersenne primes with less than 5000 digits.
     '''
-    primes = []
-
     for exp in MERSENNE_PRIME_EXPONENTS:
-        prime = 2**exp - 1
-        primes.append(prime)
-    return primes
+        yield 2**exp - 1
 
 
 def get_prime_by_bitlength(bitlength):
