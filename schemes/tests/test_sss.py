@@ -1,4 +1,3 @@
-from customexceptions import custom_exceptions
 from schemes import sss
 from crypto_tools import utilities, primes
 import pytest
@@ -98,7 +97,7 @@ def test_bad_configuration_threshold():
     bitlength = max(num_players, secret_int).bit_length()
     sharing_prime = primes.get_prime_by_bitlength(bitlength)
 
-    with pytest.raises(custom_exceptions.FatalConfigurationError):
+    with pytest.raises(ValueError):
         sss.share_secret(num_players, reconstruction_threshold, secret_int, sharing_prime)
 
 
@@ -109,7 +108,7 @@ def test_bad_configuration_prime_small_secret():
 
     sharing_prime = 7
 
-    with pytest.raises(custom_exceptions.FatalConfigurationError):
+    with pytest.raises(ValueError):
         sss.share_secret(num_players, reconstruction_threshold, bad_secret_int, sharing_prime)
 
 
@@ -120,7 +119,7 @@ def test_bad_configuration_prime_small_num_players():
 
     sharing_prime = 31
 
-    with pytest.raises(custom_exceptions.FatalConfigurationError):
+    with pytest.raises(ValueError):
         sss.share_secret(bad_num_players, reconstruction_threshold, secret_int, sharing_prime)
 
 
@@ -131,5 +130,5 @@ def test_bad_configuration_prime_none():
 
     secret_int = utilities.convert_bytestring_to_int(secret)
 
-    with pytest.raises(custom_exceptions.FatalConfigurationError):
+    with pytest.raises(ValueError):
         sss.share_secret(num_players, reconstruction_threshold, secret_int, sharing_prime)

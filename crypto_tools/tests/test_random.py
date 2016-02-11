@@ -1,5 +1,4 @@
 import pytest
-from customexceptions import custom_exceptions
 from crypto_tools import random
 
 
@@ -66,5 +65,5 @@ def test_random_size_of_field():
 def test_random_too_many():
     prime = 7
     num = 10  # test the case where there are too many requested integers for the prime selected
-    with pytest.raises(custom_exceptions.FatalConfigurationError):
+    with pytest.raises(ValueError):
         random.get_distinct_random_ints_in_field(num, prime)

@@ -32,7 +32,7 @@ def get_polynomial(coefficients, prime):
     Returns:
         P: a function that takes an integer x and returns the evaluation of the polynomial at that point
     Raises:
-        IllegalArgumentException if passed an empty coefficients list
+        ValueError, passed an empty coefficients list
     '''
     if len(coefficients) == 0:
         raise ValueError("too few coefficients to construct a polynomial")
@@ -54,7 +54,7 @@ def evaluate(coefficients, xlist, prime):
     Returns:
         a list of integer points, evaluated at the x values given
     Raises:
-        IllegalArgumentException, does not accept empty coefficients
+        ValueError, propagates from get_polynomial
     '''
     f = get_polynomial(coefficients, prime)
     return [(x, f(x)) for x in xlist]
@@ -68,6 +68,8 @@ def interpolate(points, prime):
         prime: arithmetic is done mod this prime
     Returns:
         P: a function that takes a value x and returns the evaluation of the polynomial at that point
+    Raises:
+        ValueError, passed too few points
 
     See https://en.wikipedia.org/wiki/Lagrange_polynomial
     '''

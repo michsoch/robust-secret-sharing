@@ -27,7 +27,7 @@ def share_secret(num_players, reconstruction_threshold, secret, prime):
         a list of tuple of (x, f(x)) values representing shares
             that can be used to reconstruct the secret via reconstruct_secret
     Raises:
-        FatalConfigurationError, the input arguments fail validation
+        ValueError, the input arguments fail validation
     '''
     if (not _verify_parameters(num_players, reconstruction_threshold, secret, prime)):
         raise ValueError("invalid secret sharing parameters")

@@ -21,7 +21,8 @@ def get_prime_by_bitlength(bitlength):
         a prime with strictly more bits than the specified size
         or None if no such prime is found in hardcoded list
     Raises:
-        IllegalArgumentException, size is negative
+        ValueError, size is negative
+        ValueError, could not find a sufficiently large prime
     '''
     if bitlength < 0:
         raise ValueError("invalid bit-length for prime selection")

@@ -1,7 +1,6 @@
 import os
 import math
 from crypto_tools import utilities
-from customexceptions import custom_exceptions
 
 
 def get_distinct_random_ints_in_field(num_ints, prime):
@@ -12,11 +11,11 @@ def get_distinct_random_ints_in_field(num_ints, prime):
     Returns:
         a list of distinct, randomly generated values
     Raises:
-        FatalConfigurationError, cannot return the requested number of values given the upper bound
-        EntropyNotFound, OS does not provide a source of entropy
+        ValueError, cannot return the requested number of values given the upper bound
+        ValueError, OS does not provide a source of entropy
     '''
     if num_ints > prime:  # we can never get num distinct integers in this field
-        raise custom_exceptions.FatalConfigurationError
+        raise ValueError("selected field is too small")
 
     bitlength = prime.bit_length()
     bytelength = int(math.ceil((bitlength / 8.0)))  # round up bitlength to byteelength conversion
