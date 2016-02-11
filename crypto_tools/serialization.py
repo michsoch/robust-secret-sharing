@@ -68,7 +68,7 @@ def convert_int_to_bytestring(int_val):
     hex_string = hex(int_val).lstrip('0x').rstrip('L')
     hex_len = len(hex_string)
     if hex_len % 2 is not 0:  # if the resultant length is odd, prepend with a zero
-        hex_string = hex_string.zfill(hex_len + 1)
+        hex_string = '0' + hex_string
 
     # strip prepend value added in convert_bytestring_to_int
     return codecs.decode(hex_string, 'hex').lstrip(PREPEND)
