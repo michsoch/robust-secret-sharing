@@ -6,13 +6,13 @@ This library is compatable with Python 2.7 and is cross-platform.
 
 ## Installation & Usage
 
-# Robust Secret Sharing
+#### Robust Secret Sharing
 The outermost layer of this library can be found in rss.py. The methods exposed in this library allow for full robust secret sharing. 
 That is, assuming a valid number of honest players, this library can be used to detect cheating players in a Shamir secret sharing scheme.
 It therefore ensures that if valid number of players are honest, any secret recovered will be the original, correct secret. 
 This property is not found in standalone Shamir secret sharing implementations, in which incorrect secrets can be induced by malicious players.
 
-# Standard Secret Sharing
+### Standard Secret Sharing
 Since the robust layer of this library surrounds standard Shamir Secret Sharing, this library can be used without the protection or features offered by the robust layer.
 When interacted with directly, the standard Shamir secret sharing segment of this library deals only with erasures and treats all shares provided to it as valid.
 
