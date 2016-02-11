@@ -2,7 +2,7 @@ MERSENNE_PRIME_EXPONENTS = [2, 3, 5, 7, 13, 17, 19, 31, 61, 89, 107, 127, 521, 6
                             2203, 2281, 3217, 4253, 4423]
 
 
-def mersenne_primes():
+def _mersenne_primes():
     '''
     Returns:
         all the mersenne primes with less than 5000 digits.

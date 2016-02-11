@@ -1,4 +1,4 @@
-def egcd(a, b):
+def _egcd(a, b):
     '''
     Implements the extended euclidean algorithm
     Returns:
@@ -7,20 +7,20 @@ def egcd(a, b):
     if a == 0:
         return (b, 0, 1)
     else:
-        g, y, x = egcd(b % a, a)
+        g, y, x = _egcd(b % a, a)
         return (g, x - (b // a) * y, y)
 
 
-def inverse_mod(k, prime):
+def _inverse_mod(k, prime):
     '''
     Returns:
         the inverse mod of k within the field defined by the prime
     '''
     k = k % prime
     if k < 0:
-        r = egcd(prime, -k)[2]
+        r = _egcd(prime, -k)[2]
     else:
-        r = egcd(prime, k)[2]
+        r = _egcd(prime, k)[2]
     return (prime + r) % prime
 
 
@@ -87,7 +87,7 @@ def interpolate(points, prime):
             for m in range(j) + range(j + 1, degree):
                 numerator = (numerator * (x - x_vals[m])) % prime
                 denominator = (denominator * (x_vals[j] - x_vals[m])) % prime
-            basis.append((numerator * inverse_mod(denominator, prime)) % prime)
+            basis.append((numerator * _inverse_mod(denominator, prime)) % prime)
 
         # return the sum of the product of each y value which its corresponding basis polynomial
         result = 0
