@@ -1,6 +1,6 @@
 import os
 import math
-from crypto_tools import utilities
+from crypto_tools import serialization
 
 
 def get_distinct_random_ints_in_field(num_ints, prime):
@@ -36,4 +36,4 @@ def get_random_int(bytelength):
     Raises:
         NotImplementedError, no source of randomness found
     '''
-    return utilities.convert_bytestring_to_int(os.urandom(bytelength))
+    return serialization.convert_bytestring_to_int(os.urandom(bytelength))
