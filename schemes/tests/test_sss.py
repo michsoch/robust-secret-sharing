@@ -11,7 +11,12 @@ def share_and_recover(num_players, reconstruction_threshold, secret, end):
     prime = primes.get_prime_by_bitlength(bitlength)
 
     shares = sss.share_secret(num_players, reconstruction_threshold, secret, prime)
-    return sss.reconstruct_secret(shares[:end], prime)
+
+    # mimic network transfer
+    serialized_shares = [serialization.pack_tuple(share) for share in shares]
+    deserialized_shares = [serialization.unpack_tuple(share) for share in serialized_shares]
+
+    return sss.reconstruct_secret(deserialized_shares[:end], prime)
 
 
 def test_min_shares():
