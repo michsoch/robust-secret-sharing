@@ -21,7 +21,7 @@ def get_distinct_random_ints_in_field(num_ints, prime):
     bitlength = prime.bit_length()
     bytelength = int(math.ceil((bitlength / 8.0)))  # round up bitlength to byteelength conversion
     random_values = []
-    for i in range(num_ints):
+    for i in xrange(num_ints):
         try:
             value = get_random_int(bytelength) % prime
             while value in random_values:  # ensure distinct values

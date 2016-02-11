@@ -39,7 +39,7 @@ def get_polynomial(coefficients, prime):
 
     def P(x):
         sum = 0
-        for i in range(len(coefficients)):
+        for i in xrange(len(coefficients)):
             sum += (coefficients[i] * pow(x, i, prime)) % prime
         return sum % prime
     return P
@@ -80,7 +80,7 @@ def interpolate(points, prime):
 
     def P(x):
         basis = []
-        for j in range(degree):  # the jth basis is the product over m from 0 to degree with m != j
+        for j in xrange(degree):  # the jth basis is the product over m from 0 to degree with m != j
             numerator, denominator = 1, 1   # of (x - x_m) / (x_j - x_m)
             for m in range(j) + range(j + 1, degree):
                 numerator = (numerator * (x - x_vals[m])) % prime
@@ -89,7 +89,7 @@ def interpolate(points, prime):
 
         # return the sum of the product of each y value which its corresponding basis polynomial
         result = 0
-        for i in range(degree):
+        for i in xrange(degree):
             result += y_vals[i] * basis[i]
         return result % prime
     return P

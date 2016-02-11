@@ -33,7 +33,7 @@ def share_secret(num_players, reconstruction_threshold, secret, prime):
         raise ValueError("invalid secret sharing parameters")
 
     # fix n distinct points, alpha_1,...,alpha_n in Z_ps  (public)
-    alpha = [i for i in range(1, num_players + 1)]  # TODO: should these be picked arbitrarily to hide n?
+    alpha = [i for i in xrange(1, num_players + 1)]  # TODO: should these be picked arbitrarily to hide n?
 
     # choose at random t points, a_1,...,a_t in Z_ps (private)
     #   we will use the a_i values as our coefficients to define the polynomial f(x) = (a_t x^t) + ... + (a_1 x) + s
