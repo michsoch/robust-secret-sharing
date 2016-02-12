@@ -5,10 +5,10 @@ def _egcd(a, b):
         the tuple (g, x, y), such that ax + by = g = gcd(a, b)
     '''
     if a == 0:
-        return (b, 0, 1)
+        return b, 0, 1
     else:
         g, y, x = _egcd(b % a, a)
-        return (g, x - (b // a) * y, y)
+        return g, x - (b // a) * y, y
 
 
 def _inverse_mod(k, prime):
@@ -74,7 +74,7 @@ def interpolate(points, prime):
     See https://en.wikipedia.org/wiki/Lagrange_polynomial
     '''
     degree = len(points)
-    if (degree <= 1):
+    if degree <= 1:
         raise ValueError("too few points to recover a polynomial")
 
     # convert t + 1 data points, (x_0, y_0),...,(x_{t+1}, y_{t+1}) into lists of x and y

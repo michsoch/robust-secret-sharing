@@ -37,7 +37,7 @@ def unpack_tuple(packed_string):
     '''
     pieces = packed_string.split(",", 3)  # split into a max of 3 pieces
 
-    if len(pieces) is not 3 or len(pieces[2]) is not int(pieces[0]) + int(pieces[1]):
+    if len(pieces) != 3 or len(pieces[2]) != (int(pieces[0]) + int(pieces[1])):
         raise ValueError(UNPACK_ERROR_STRING)
 
     unpack_fmt = "!" + pieces[0] + "s" + pieces[1] + "s"
