@@ -51,6 +51,7 @@ def convert_bytestring_to_int(bytestring):
         bytestring, any bytestring value
     Returns:
         an integer that can be passed to convert_int_to_bytestring
+    Note that this integer will be larger by a byte than the value of the bytestring
     '''
     # use the prepend value to preserve leading zeros in the bytestring
     hex_string = codecs.encode(PREPEND + bytestring, 'hex')
