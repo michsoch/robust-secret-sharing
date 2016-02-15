@@ -1,5 +1,5 @@
 import pytest
-from crypto_tools import random
+from robustsecretsharing.crypto_tools import random
 
 
 def test_random_big_single():

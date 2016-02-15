@@ -45,6 +45,11 @@
 
     # input / output will be bytestring (TODO: chat with Doron to avoid mistakes of previous libraries)
 
+        # fix a small prime ps > n such that s is in Z_ps (public)
+        # Note that low ps sets an upper bound on s
+        # large ps increases the likelihood that f(x) mod p = f(x)
+    # sharing_prime = primes.get_prime([num_players, secret])
+
 # parameters:
     # n: number of providers (n >= 2t + 1)
     # t: t players get no info, t + 1 can reconstruct

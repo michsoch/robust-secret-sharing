@@ -1,4 +1,4 @@
-from crypto_tools import serialization
+from robustsecretsharing.crypto_tools import serialization
 import pytest
 
 

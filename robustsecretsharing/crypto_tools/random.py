@@ -1,6 +1,6 @@
 import os
 import math
-from crypto_tools import serialization
+from robustsecretsharing.crypto_tools import serialization
 
 
 def get_distinct_random_ints_in_field(num_ints, prime):

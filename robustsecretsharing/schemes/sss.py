@@ -1,4 +1,4 @@
-from crypto_tools import random, polynomials, primes, serialization
+from robustsecretsharing.crypto_tools import random, polynomials, primes, serialization
 
 
 def _verify_parameters(num_players, reconstruction_threshold, secret, prime):
@@ -59,6 +59,7 @@ def share_secret(num_players, reconstruction_threshold, max_secret_length, secre
     Raises:
         ValueError, the input arguments fail validation
     '''
+    print 'SHARE SECRET'
     secret_int = serialization.convert_bytestring_to_int(secret)
     points = _share_secret_int(num_players, reconstruction_threshold, max_secret_length + 1, secret_int)
     return [serialization.pack_tuple(tup) for tup in points]

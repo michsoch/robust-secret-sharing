@@ -1,5 +1,5 @@
 import pytest
-from crypto_tools import primes
+from robustsecretsharing.crypto_tools import primes
 
 
 def test_get_prime_by_bitlength_standard():
