@@ -14,10 +14,8 @@ def generate_check_vector(message, max_length):
     bitlength = max(PRIME_EXP, max_length * 8)
     prime = primes.get_prime_by_bitlength(bitlength)  # generate a large prime
 
-    b = 0
-    while b == 0:
-        b = random.get_distinct_random_ints_in_field(1, prime)[0]  # generate a random value not equal to zero
-    y = random.get_distinct_random_ints_in_field(1, prime)[0]  # generate a random value
+    b = random.get_random_positive_int_in_field(prime)
+    y = random.get_random_int_in_field(prime)
     return y, (b, (message + b * y) % prime)
 
 
