@@ -1,6 +1,11 @@
 from robustsecretsharing.crypto_tools import random, primes
 
-PRIME_EXP = 607  # TODO: check if there is a standard for "large enough" prime
+PRIME_EXP = 107
+
+
+def get_large_prime(max_length):
+    bitlength = max(PRIME_EXP, max_length * 8)  # accommodate secret length or default to large exponent
+    return primes.get_prime_by_bitlength(bitlength)
 
 
 def generate_check_vector(message, max_length):
@@ -11,8 +16,7 @@ def generate_check_vector(message, max_length):
     Returns:
         (key, vector) where key is the integer MAC key and vector is the tuple MAC tag
     '''
-    bitlength = max(PRIME_EXP, max_length * 8)
-    prime = primes.get_prime_by_bitlength(bitlength)  # generate a large prime
+    prime = get_large_prime(max_length)
 
     b = random.get_random_positive_int_in_field(prime)
     y = random.get_random_int_in_field(prime)
@@ -30,8 +34,7 @@ def validate(key, vector, message, max_length):
         True if the provided key and vector validate the given message,
         False otherwise
     '''
-    bitlength = max(PRIME_EXP, max_length * 8)
-    prime = primes.get_prime_by_bitlength(bitlength)  # generate a large prime
+    prime = get_large_prime(max_length)
 
     return (message + vector[0] * key) % prime == vector[1]
 
@@ -48,7 +51,7 @@ def generate_batch(num_macs, message, max_length):
     '''
     keys = []
     vectors = []
-    for n in range(num_macs):
+    for n in xrange(num_macs):
         key, vector = generate_check_vector(message, max_length)
         keys.append(key)
         vectors.append(vector)
@@ -66,7 +69,4 @@ def validate_batch(keys, vectors, message, max_length):
         validated, a list of True or False values in parallel with keys and vectors
             such that validated[i] indicates if the keys[i], vectors[i] pair validated the message
     '''
-    validated = []
-    for key, vector in zip(keys, vectors):
-        validated.append(validate(key, vector, message, max_length))
-    return validated
+    return [validate(key, vector, message, max_length) for (key, vector) in zip(keys, vectors)]
