@@ -39,7 +39,7 @@ def _share_secret_int(num_players, reconstruction_threshold, max_secret_length, 
 
     # choose at random t points, a_1,...,a_t in Z_ps (private)
     #   we will use the a_i values as our coefficients to define the polynomial f(x) = (a_t x^t) + ... + (a_1 x) + s
-    coefficients = [secret] + random.get_distinct_random_ints_in_field(reconstruction_threshold - 1, prime)
+    coefficients = [secret] + random.get_distinct_positive_random_ints_in_field(reconstruction_threshold - 1, prime)
 
     # for values of i from 1 to n, calculate f(alpha_i)
     return polynomials.evaluate(coefficients, alphas, prime)

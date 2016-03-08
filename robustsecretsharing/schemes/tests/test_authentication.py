@@ -6,7 +6,7 @@ def test_check_vector_standard():
     message = 112358132134
     max_length = len(str(message))
     key, vector = authentication.generate_check_vector(message, max_length)
-    assert authentication.validate(key, vector, message, max_length)
+    assert authentication.validate(key, vector, message, max_length) is True
 
 
 def test_check_vector_large():
@@ -21,10 +21,10 @@ def test_check_vector_large():
 
     message = int(message)
     key, vector = authentication.generate_check_vector(message, max_length)
-    assert authentication.validate(key, vector, message, max_length)
+    assert authentication.validate(key, vector, message, max_length) is True
 
 
-def test_check_vector_too_large():
+def test_check_vector_message_too_large():
     message = ('123456789012345678901234567890123456789012345678901234567890'
                '123456789012345678901234567890123456789012345678901234567890'
                '123456789012345678901234567890123456789012345678901234567890'
@@ -64,7 +64,7 @@ def test_generate_batch_validate_single():
 
     keys, vectors = authentication.generate_batch(num_macs, message, max_length)
     for key, vector in zip(keys, vectors):
-        assert authentication.validate(key, vector, message, max_length)
+        assert authentication.validate(key, vector, message, max_length) is True
 
 
 def test_generate_batch_validate_batch_all_valid():

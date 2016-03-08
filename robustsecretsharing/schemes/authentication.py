@@ -1,6 +1,18 @@
 from robustsecretsharing.crypto_tools import random, primes
 
-PRIME_EXP = 607  # TODO: check if there is a standard for "large enough" prime
+PRIME_EXP = 107
+
+
+def get_large_prime(max_length):
+    '''
+    Generate a large prime that accommodates the max message length or defaults to a large prime
+    Args:
+        integer value of maximum digit-length for a message
+    Returns:
+        a sufficiently large prime to be used in the check vector authentication scheme
+    '''
+    bitlength = max(PRIME_EXP, max_length * 8)
+    return primes.get_prime_by_bitlength(bitlength)
 
 
 def generate_check_vector(message, max_length):
@@ -11,13 +23,11 @@ def generate_check_vector(message, max_length):
     Returns:
         (key, vector) where key is the integer MAC key and vector is the tuple MAC tag
     '''
-    bitlength = max(PRIME_EXP, max_length * 8)
-    prime = primes.get_prime_by_bitlength(bitlength)  # generate a large prime
+    prime = get_large_prime(max_length)
 
-    b = 0
-    while b == 0:
-        b = random.get_distinct_random_ints_in_field(1, prime)[0]  # generate a random value not equal to zero
-    y = random.get_distinct_random_ints_in_field(1, prime)[0]  # generate a random value
+    b = random.get_random_positive_int_in_field(prime)
+    y = random.get_random_int_in_field(prime)
+
     return y, (b, (message + b * y) % prime)
 
 
@@ -32,10 +42,7 @@ def validate(key, vector, message, max_length):
         True if the provided key and vector validate the given message,
         False otherwise
     '''
-    bitlength = max(PRIME_EXP, max_length * 8)
-    prime = primes.get_prime_by_bitlength(bitlength)  # generate a large prime
-
-    return (message + vector[0] * key) % prime == vector[1]
+    return (message + vector[0] * key) % get_large_prime(max_length) == vector[1]
 
 
 def generate_batch(num_macs, message, max_length):
@@ -45,16 +52,10 @@ def generate_batch(num_macs, message, max_length):
         message, the integer to be authenticated
         max_length, a value greater than or equal to len(str(message))
     Return:
-        keys, vectors give parallel lists of keys (integers) and vectors (tuples)
+        a tuple of two parallel lists, which hold keys (integers) and vectors (tuples)
             such that each keys[i], vectors[i] pair authenticate the given message
     '''
-    keys = []
-    vectors = []
-    for n in range(num_macs):
-        key, vector = generate_check_vector(message, max_length)
-        keys.append(key)
-        vectors.append(vector)
-    return keys, vectors
+    return zip(*[generate_check_vector(message, max_length) for n in xrange(num_macs)])
 
 
 def validate_batch(keys, vectors, message, max_length):
@@ -68,7 +69,4 @@ def validate_batch(keys, vectors, message, max_length):
         validated, a list of True or False values in parallel with keys and vectors
             such that validated[i] indicates if the keys[i], vectors[i] pair validated the message
     '''
-    validated = []
-    for key, vector in zip(keys, vectors):
-        validated.append(validate(key, vector, message, max_length))
-    return validated
+    return [validate(key, vector, message, max_length) for (key, vector) in zip(keys, vectors)]
