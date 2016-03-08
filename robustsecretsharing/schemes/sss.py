@@ -69,6 +69,7 @@ def _reconstruct_secret_int(num_players, max_secret_length, shares):
     Args:
         num_players, the total number of players (can be greater than or equal to the number of shares)
         max_secret_length, the maximum length of the secret represented as a bytestring (ie, len(secret))
+        shares, a list of tuples representing (x, f(x)) values
     Returns:
         the integer that was shared by _share_secret_int
     '''
@@ -82,7 +83,7 @@ def reconstruct_secret(num_players, max_secret_length, shares):
     Args:
         num_players, the total number of players (can be greater than or equal to the number of shares)
         max_secret_length, the maximum length of the secret represented as a bytestring (ie, len(secret))
-        shares, a list of bytestrings - each reprsenting a tuple of (x, f(x)) values.
+        shares, a list of strings - each representing an integer value
     Returns:
         the bytestring that was shared by share_secret
     '''
