@@ -38,6 +38,12 @@ def test_encode_decode_leading_star():
     assert serialization.convert_int_to_bytestring(int_result) == bytestring
 
 
+def test_encode_decode_trailing_L():
+    bytestring = 'e\x9c\x9e\x16\xe9\xea\x15+\xbf]\xebx;o\xef\xc9X1c\xaepj\xebj\x12\xe3r\xcdLL'
+    int_result = serialization.convert_bytestring_to_int(bytestring)
+    assert serialization.convert_int_to_bytestring(int_result) == bytestring
+
+
 def test_encode_decode_trailing_zeros():
     bytestring = 'e\x9c\x9e\x16\xe9\xea\x15+\xbf]\xebx;o\xef\xc9X1c\xaepj\xebj\x12\xe3r\xcd\xeaM\x00\x00'
     int_result = serialization.convert_bytestring_to_int(bytestring)
