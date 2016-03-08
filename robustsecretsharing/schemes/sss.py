@@ -1,4 +1,5 @@
 from robustsecretsharing.crypto_tools import random, polynomials, primes, serialization
+from robustsecretsharing.schemes import pairing
 
 
 def _verify_parameters(num_players, reconstruction_threshold, secret, prime):
@@ -61,7 +62,7 @@ def share_secret(num_players, reconstruction_threshold, max_secret_length, secre
     '''
     secret_int = serialization.convert_bytestring_to_int(secret)
     points = _share_secret_int(num_players, reconstruction_threshold, max_secret_length + 1, secret_int)
-    return [serialization.pack_tuple(tup) for tup in points]
+    return [str(pairing.elegant_pair(*tup)) for tup in points]
 
 
 def _reconstruct_secret_int(num_players, max_secret_length, shares):
@@ -87,6 +88,6 @@ def reconstruct_secret(num_players, max_secret_length, shares):
     Returns:
         the bytestring that was shared by share_secret
     '''
-    points = [serialization.unpack_tuple(share) for share in shares]
+    points = [pairing.elegant_unpair(int(share)) for share in shares]
     secret_int = _reconstruct_secret_int(num_players, max_secret_length + 1, points)
     return serialization.convert_int_to_bytestring(secret_int)
