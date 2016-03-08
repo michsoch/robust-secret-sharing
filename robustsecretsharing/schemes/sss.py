@@ -55,8 +55,7 @@ def share_secret(num_players, reconstruction_threshold, max_secret_length, secre
         max_secret_length, the maximum length of the secret represented as a bytestring (ie, len(secret))
         secret, a bytestring to be Shamir secret shared
     Returns:
-        a list of bytestrings, each reprsenting a tuple of (x, f(x)) values
-            these are the shares that can be used to reconstruct the secret via reconstruct_secret
+        a list of strings, each representing an integer, that can be passed to reconstruct_secret
     Raises:
         ValueError, the input arguments fail validation
     '''
@@ -70,7 +69,6 @@ def _reconstruct_secret_int(num_players, max_secret_length, shares):
     Args:
         num_players, the total number of players (can be greater than or equal to the number of shares)
         max_secret_length, the maximum length of the secret represented as a bytestring (ie, len(secret))
-        shares, a list of bytestrings - each reprsenting a tuple of (x, f(x)) values.
     Returns:
         the integer that was shared by _share_secret_int
     '''

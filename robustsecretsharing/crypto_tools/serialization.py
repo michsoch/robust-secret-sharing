@@ -56,7 +56,7 @@ def _convert_hex_to_bytestring(hex_string):
 def convert_bytestring_to_int(byte_string):
     '''
     Args:
-        bytestring, any bytestring value
+        byte_string, any bytestring value
     Returns:
         an integer that can be passed to convert_int_to_bytestring
     Note that this integer will be larger by a byte than the value of the bytestring
