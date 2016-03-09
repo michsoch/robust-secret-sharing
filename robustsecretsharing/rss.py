@@ -1,20 +1,125 @@
-# Implementation of the Rabin Ben-Or Robust Secret Sharing scheme
+from robustsecretsharing.crypto_tools import serialization
+from robustsecretsharing.schemes import authentication, sss, pairing
+import json
 
-# generate shares of the secret s: (s_1, . . . , s_n)
-    # (see sss.py)
 
-# generate n^2 MAC keys k_{ij}
-    # NaCl (?)
+class FatalReconstructionFailure(Exception):
+    """
+    Raised when there are too few honest shares too allow for reconstruction of the secret
+    """
 
-# generate n^2 MAC tags t_ij = MAC(k_ij, sj)
-    # see paper or use NaCl MACs (?)
 
-# give to player i the tuple (s_i, t_{ji}_j, k_{ij}_j)
-    # the second index of the key and tag corresponds to the player index
-    # that is, we give each player:
-        # their share of the secret
-        # n tags associated with this share
-        # one key for for each provider
+def jsonify_robust_share(share, keys, vectors):
+    return json.dumps({'share': share, 'keys': keys, 'vectors': vectors})
+
+
+def unjsonify_robust_share(json_dump):
+    json_dict = json.loads(json_dump)
+    return json_dict['share'], json_dict['keys'], json_dict['vectors']
+
+
+def make_robust_shares(int_shares, batch_keys, batch_vectors):
+    robust_shares = []
+    for share in int_shares:  # give to player i the tuple (s_i, t_{ji}_j, k_{ij}_j) over values of j
+        player_keys = [batch_keys[s][len(robust_shares)] for s in int_shares]
+        robust_shares.append(jsonify_robust_share(share, player_keys, batch_vectors[share]))
+    return robust_shares
+
+
+def share_secret(num_players, reconstruction_threshold, max_secret_length, secret):
+    '''
+    Args:
+        num_players, the number of shares to be distributed
+        reconstruction_threshold, the number of shares needed for reconstruction
+            any collection of fewer shares will reveal no information about the secret
+        max_secret_length, the maximum length of the secret represented as a bytestring (ie, len(secret))
+        secret, an integer to be Shamir secret shared
+    Returns:
+        a list of bytestrings, each reprsenting a tuple of (x, f(x)) values TODO: also include the keys and macs
+            these are the shares that can be used to reconstruct the secret via reconstruct_secret
+    Raises:
+        ValueError, the input parameters fail validation
+    '''
+    secret_int = serialization.convert_bytestring_to_int(secret)
+
+    # generate shares of the secret s: ((x_1, s_1), . . . , (x_n, s_n))
+    int_shares = [pairing.elegant_pair(*share) for share in sss._share_secret_int(num_players, reconstruction_threshold, max_secret_length + 1, secret_int)]
+
+    batch_keys, batch_vectors = {}, {}  # TODO: is there a more pythonic way to to do this?
+    for share in int_shares:  # generate n MAC keys k_ij and vectors t_ij = MAC(k_ij, s_j) per share s_j
+        batch_keys[share], batch_vectors[share] = authentication.generate_batch(num_players, share, max_secret_length)
+
+    return make_robust_shares(int_shares, batch_keys, batch_vectors)
+
+
+def reconstruct_secret(num_players, reconstruction_threshold, max_secret_length, robust_shares):
+    '''
+    Args:
+        num_players, the total number of players (can be greater than or equal to the number of shares)
+        reconstruction_threshold, the number of shares needed for reconstruction
+        max_secret_length, the maximum length of the secret represented as a bytestring (ie, len(secret))
+        robust_shares, a list of JSON strings collected from share_secret
+
+        Note: (TODO) - for now assume that len(shares) >= reconstruction_threshold
+    Returns:
+        result, a tuple of (secret, malicious_shares_list)
+            secret: the bytestring that was shared by share_secret
+            malicious_shares_list: the list of corrupt shares that fail authentication
+    Raises:
+        ValueError, share that were believed to be valid could not be parsed. Indicates some IllegalState.
+        FatalReconstructionFailure, custom exception raised when the number of honest shares is less than reconstruction_threshold
+    '''
+
+    shares, share_keys, share_vectors = zip(*[unjsonify_robust_share(robust_share) for robust_share in robust_shares])
+
+    tuple_shares = [pairing.elegant_unpair(share) for share in shares]
+    return serialization.convert_int_to_bytestring(sss._reconstruct_secret_int(num_players, max_secret_length + 1, tuple_shares))
+
+    # TODO: for now, just call sss reconstruction and see if we can pass the basic sharing tests
+
+    # TODO: verify parameters
+
+    # create a dictionary of number tags to each share (bytestring)
+
+    # then create a dictionary of number tags to number tags that have been verified by that one
+
+    # look for a t + 1 or great agreement
+        # TODO: how to do this cleanly?
+        #   for each number tag, add to list all the number tags that it authorizes
+        # ex.
+        #   dict = {1: [1, 2, 3], 2: [2, 3, 1], 3: [3, 2, 1], 4: [4, 5], 5: [4, 5]}
+
+        #   then take that dictionary and convert the lists to tuples of sorted lists
+        # ex.
+        #   dict = {key: tuple(sorted(value)) for key, value in dict.items()}
+
+        #   combine based on values
+        # ex.
+        #   groups = defaultdict(list)
+        #   for key, value in dict.items():
+        #       groups[value].append(key)
+
+        #   look for lists of values that are greater than or equal to t + 1
+        # ex.
+        #   invalidated = []
+        #   for key, value in groups.items():
+        #       if len(value) >= reconstruction_threshold:
+        #           authorized = key
+        #       else:
+        #           for k in key:
+        #               invalidated.append(k)
+
+    # take the number tags that were not in that agreement and make malicious_shares_list from their shares
+
+    # take the number tags from that agreement to get back bytestring shares, and pass to sss.reconstruct_secret
+
+    # then return bytestring (secret, malicious_shares_list)
+
+
+
+# ______________________________________________________________________________________________________________________________
+
+
 # ______________________________________________________________________________________________________________________________
 
 # Shamir Secret Sharing with an honest dealer
@@ -27,28 +132,7 @@
     # that it will be the original secret the dealer shared."
 
 # TODOS:
-    # thinking of
-    # https://github.com/blockstack/secret-sharing/blob/837f28b88958604866ac1707266d10539d740abf/secretsharing/primes.py
-    # for primes but want to run it by Nadia
-        # get the same prime for the same secret - is that bad?
-        # can I just generate a massive number to pass in and get the prime that way for check vector?
-
-    # thinking of _____ for random values
-
-    # vet and / or write polynomial algorithms
-        # https://github.com/blockstack/secret-sharing/blob/837f28b88958604866ac1707266d10539d740abf/secretsharing/polynomials.py
-            # take egcd and mod_inverse (standard)
-            # write random_polynomial and get_points (can compare after)
-            # write modular_lagrange_interpolation based on (can compare after)
-                # http://math.stackexchange.com/questions/621406/lagrange-interpolating-polynomial-using-modulo
-                # http://www.artofproblemsolving.com/community/c1157h990758
-
-    # input / output will be bytestring (TODO: chat with Doron to avoid mistakes of previous libraries)
-
-        # fix a small prime ps > n such that s is in Z_ps (public)
-        # Note that low ps sets an upper bound on s
-        # large ps increases the likelihood that f(x) mod p = f(x)
-    # sharing_prime = primes.get_prime([num_players, secret])
+    # hard-code a massive prime for auth
 
 # parameters:
     # n: number of providers (n >= 2t + 1)
@@ -73,23 +157,9 @@
             # the (b_ji, c_ji) values are used by Pi to authenticate players Pj's tag
 
 # recovering the secret (Phase 2) -
-    # TODO: some thinking that needs to be done here
-        # this algorithm assumes that all honest players should ultimately be able to agree on the secret
-        # we only want the dealer in our case to determine the secret
-        # fix: just make the checks below ourselves by requesting info rather than sending it out
+    # fix: just make the checks below ourselves by requesting info rather than sending it out
 
-    # TODO: how do we ultimately decide on the correct secret, as the dealer?
-        # threat model (what can a malicious provider do?)
-            # send back a corrupted share
-            # send back an invalid tag for their own share
-            # send a corrupted key for another provider
-
-        # do we take majority vote or do we need t + 1 to make a vote?
-
-        # what if we get a valid share and tag from a provider but they lie
-            # about who else is honest?
-
-    # TODO: is this something we can do for reed-solomon or is there a different solution in that case?
+    # goal: look for agreement across a subset of t + 1 of the shares
 
     # retrieve values from all players
 
