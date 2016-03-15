@@ -1,6 +1,6 @@
 import codecs
 
-PREPEND = '*'
+MAGIC = '*'
 
 
 def _convert_hex_to_int(hex_string):
@@ -21,7 +21,7 @@ def _convert_int_to_hex(int_val):
         a hex_string of even length
     '''
     hex_string = format(int_val, 'x')
-    if len(hex_string) % 2 is not 0:
+    if len(hex_string) % 2 != 0:
         hex_string = '0' + hex_string
     return hex_string
 
@@ -34,7 +34,7 @@ def _convert_bytestring_to_hex(byte_string):
         a hex_string that can be passed to _convert_hex_to_bytestring
         and will be larger by a byte than the value of the bytestring
     '''
-    return codecs.encode(PREPEND + byte_string, 'hex')  # preserve leading zeros in the bytestring
+    return codecs.encode(MAGIC + byte_string, 'hex')  # preserve leading zeros in the bytestring
 
 
 def _convert_hex_to_bytestring(hex_string):
@@ -47,8 +47,8 @@ def _convert_hex_to_bytestring(hex_string):
         ValueError, cannot parse because bytestring is missing prepend value
     '''
     byte_string = codecs.decode(hex_string, 'hex')
-    if byte_string.startswith(PREPEND):
-        return codecs.decode(hex_string, 'hex')[len(PREPEND):]
+    if byte_string.startswith(MAGIC):
+        return codecs.decode(hex_string, 'hex')[len(MAGIC):]
     else:
         raise ValueError("cannot parse bytestring")
 
