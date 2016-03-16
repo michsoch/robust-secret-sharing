@@ -8,16 +8,6 @@ def _get_byte_length(value):
     return int(math.ceil((bitlength / 8.0)))
 
 
-def _get_random_int(bytelength):
-    '''
-    Returns:
-        a cryptographically-secure random integer that has the specified number of bytes
-    Raises:
-        NotImplementedError, no source of randomness found
-    '''
-    return serialization.convert_bytestring_to_int(os.urandom(bytelength))
-
-
 def get_random_int_in_field(prime):
     '''
     Args:
@@ -28,7 +18,9 @@ def get_random_int_in_field(prime):
         ValueError, OS does not provide a source of entropy
     '''
     try:
-        return _get_random_int(_get_byte_length(prime)) % prime
+        bytelength = _get_byte_length(prime)
+        random_int = serialization.convert_bytestring_to_int(os.urandom(bytelength))
+        return random_int % prime
     except NotImplementedError:
         raise ValueError("no found implementation for entropy")
 
