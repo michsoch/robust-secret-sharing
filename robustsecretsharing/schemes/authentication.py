@@ -1,6 +1,6 @@
 from robustsecretsharing.crypto_tools import random, primes
 
-PRIME_EXP = 107
+PRIME_EXP = 107  # default to sufficiently large Mersenne prime
 
 
 def get_large_prime(max_length):
@@ -23,7 +23,7 @@ def generate_check_vector(message, max_length):
     Returns:
         (key, vector) where key is the integer MAC key and vector is the tuple MAC tag
     '''
-    prime = get_large_prime(max_length)
+    prime = get_large_prime(max_length)  # the probability of failure for prime p is 1/2^p
 
     b = random.get_random_positive_int_in_field(prime)
     y = random.get_random_int_in_field(prime)
@@ -55,7 +55,7 @@ def generate_batch(num_macs, message, max_length):
         a tuple of two parallel lists, which hold keys (integers) and vectors (tuples)
             such that each keys[i], vectors[i] pair authenticate the given message
     '''
-    return zip(*[generate_check_vector(message, max_length) for n in xrange(num_macs)])
+    return zip(*[generate_check_vector(message, max_length) for _ in xrange(num_macs)])
 
 
 def validate_batch(keys, vectors, message, max_length):
