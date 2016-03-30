@@ -1,61 +1,68 @@
 import codecs
-import struct
 
-PREPEND = '*'
-DELIM = ','
-
-UNPACK_ERROR_STRING = "cannot parse packed tuple"
+MAGIC = '*'
 
 
-def pack_tuple(two_tup):
+def _convert_hex_to_int(hex_string):
     '''
     Args:
-        two_tup, a tuple of two integers
+        hex_string, any hex_string
     Returns:
-        a string that can be parsed by unpack_tuple
-    Note that invalid parameters passed to this function will not be caught until the output is unpacked
+        an integer value representing the hex_string
     '''
-    x_str = str(two_tup[0])
-    y_str = str(two_tup[1])
-
-    x_len_str = str(len(x_str))
-    y_len_str = str(len(y_str))
-
-    pack_fmt = "!" + x_len_str + "s" + y_len_str + "s"
-    return x_len_str + "," + y_len_str + "," + struct.pack(pack_fmt, x_str, y_str)
+    return int(hex_string, 16)
 
 
-def unpack_tuple(packed_string):
+def _convert_int_to_hex(int_val):
     '''
     Args:
-        packed_string, the return value of pack_tuple()
+        int_val, any integer
     Returns:
-        the tuple of two integers that had been passed to pack_tuple
+        a hex_string of even length
+    '''
+    hex_string = format(int_val, 'x')
+    if len(hex_string) % 2 != 0:
+        hex_string = '0' + hex_string
+    return hex_string
+
+
+def _convert_bytestring_to_hex(byte_string):
+    '''
+    Args:
+        byte_string, any byte_string
+    Returns:
+        a hex_string that can be passed to _convert_hex_to_bytestring
+        and will be larger by a byte than the value of the bytestring
+    '''
+    return codecs.encode(MAGIC + byte_string, 'hex')  # preserve leading zeros in the bytestring
+
+
+def _convert_hex_to_bytestring(hex_string):
+    '''
+    Args:
+        hex_string, the hex_string returned from _convert_bytestring_to_hex
+    Returns:
+        the bytestring passed to _convert_bytestring_to_hex
     Raises:
-        ValueError, mutations to the packed string render it invalid
-        Note that if the packed string is corrupted but can still be parsed there will be no indication of error
+        ValueError, cannot parse because bytestring is missing prepend value
     '''
-    pieces = packed_string.split(",", 3)  # split into a max of 3 pieces
-
-    if len(pieces) != 3 or len(pieces[2]) != (int(pieces[0]) + int(pieces[1])):
-        raise ValueError(UNPACK_ERROR_STRING)
-
-    unpack_fmt = "!" + pieces[0] + "s" + pieces[1] + "s"
-    str_tup = struct.unpack(unpack_fmt, pieces[2])
-    return (int(str_tup[0]), int(str_tup[1]))
+    byte_string = codecs.decode(hex_string, 'hex')
+    if byte_string.startswith(MAGIC):
+        return codecs.decode(hex_string, 'hex')[len(MAGIC):]
+    else:
+        raise ValueError("cannot parse bytestring")
 
 
-def convert_bytestring_to_int(bytestring):
+def convert_bytestring_to_int(byte_string):
     '''
     Args:
-        bytestring, any bytestring value
+        byte_string, any bytestring value
     Returns:
         an integer that can be passed to convert_int_to_bytestring
     Note that this integer will be larger by a byte than the value of the bytestring
     '''
-    # use the prepend value to preserve leading zeros in the bytestring
-    hex_string = codecs.encode(PREPEND + bytestring, 'hex')
-    return int(hex_string, 16)
+    hex_string = _convert_bytestring_to_hex(byte_string)
+    return _convert_hex_to_int(hex_string)
 
 
 def convert_int_to_bytestring(int_val):
@@ -64,12 +71,8 @@ def convert_int_to_bytestring(int_val):
         int_val, an integer as returned by convert_bytestring_to_int
     Returns:
         the bytestring passed to convert_bytestring_to_int
+    Raises:
+        ValueError, resultant bytestring is not of the correct form
     '''
-    # remove possible padding from long conversion and hex formatting
-    hex_string = hex(int_val).lstrip('0x').rstrip('L')
-    hex_len = len(hex_string)
-    if hex_len % 2 is not 0:  # if the resultant length is odd, prepend with a zero
-        hex_string = '0' + hex_string
-
-    # strip prepend value added in convert_bytestring_to_int
-    return codecs.decode(hex_string, 'hex').lstrip(PREPEND)
+    hex_string = _convert_int_to_hex(int_val)
+    return _convert_hex_to_bytestring(hex_string)
