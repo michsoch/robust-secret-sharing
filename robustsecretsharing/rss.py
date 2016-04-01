@@ -1,174 +1,238 @@
 from robustsecretsharing.crypto_tools import serialization
 from robustsecretsharing.schemes import authentication, sss, pairing
+from collections import defaultdict
 import json
 
 
 class FatalReconstructionFailure(Exception):
     """
-    Raised when there are too few honest shares too allow for reconstruction of the secret
+    Raised when there are too few honest shares to allow for reconstruction of the secret
     """
 
 
 def jsonify_robust_share(share, keys, vectors):
+    '''
+    Args:
+        share, an integer representation of a share
+        keys, a list of integer representation of authentication keys
+        vectors, a list of tuples of ints representing authentication vectors
+    Returns:
+        a JSON string that encodes the arguments in a dictionary
+        with keys: share, keys, and vectors
+    '''
     return json.dumps({'share': share, 'keys': keys, 'vectors': vectors})
 
 
 def unjsonify_robust_share(json_dump):
-    json_dict = json.loads(json_dump)
-    return json_dict['share'], json_dict['keys'], json_dict['vectors']
-
-
-def make_robust_shares(int_shares, batch_keys, batch_vectors):
-    robust_shares = []
-    for share in int_shares:  # give to player i the tuple (s_i, t_{ji}_j, k_{ij}_j) over values of j
-        player_keys = [batch_keys[s][len(robust_shares)] for s in int_shares]
-        robust_shares.append(jsonify_robust_share(share, player_keys, batch_vectors[share]))
-    return robust_shares
-
-
-def share_secret(num_players, reconstruction_threshold, max_secret_length, secret):
     '''
     Args:
-        num_players, the number of shares to be distributed
+        json_dump, a JSON string created by jsonify_robust_share
+    Returns:
+        a dictionary of the arguments passed to jsonify_robust_share
+        with keys (share, keys, vectors)
+    '''
+    return json.loads(json_dump)
+
+
+def make_robust_shares(shares_map, batch_keys, batch_vectors):
+    '''
+    Args:
+        shares_map, a map of player ids to integer-valued shares
+        batch_keys, a dictionary of player ids to
+            dictionaries of player ids to associated integer keys
+        batch_vectors, a dictionary of player ids to
+            dictionaries of player ids to associated tuple vectors
+    Returns:
+        a dictionary of player ids to robust shares that are json strings containing
+            a share
+            a map of player ids to keys for the shares held by those providers
+            a map of player ids to vectors for this share
+                that can be verified by keys held by those providers
+    '''
+    robust_shares_map = {}
+    for player, share in shares_map.items():
+        keys_for_providers = {other: batch_keys[other][player] for other in shares_map.keys()}
+        robust_shares_map[player] = jsonify_robust_share(share, keys_for_providers, batch_vectors[player])
+    return robust_shares_map
+
+
+def share_secret(players, reconstruction_threshold, max_secret_length, secret):
+    '''
+    Args:
+        players, a list of unique string ids for all players
         reconstruction_threshold, the number of shares needed for reconstruction
             any collection of fewer shares will reveal no information about the secret
         max_secret_length, the maximum length of the secret represented as a bytestring (ie, len(secret))
         secret, an integer to be Shamir secret shared
     Returns:
-        a list of bytestrings, each reprsenting a tuple of (x, f(x)) values TODO: also include the keys and macs
-            these are the shares that can be used to reconstruct the secret via reconstruct_secret
+        TODO
     Raises:
         ValueError, the input parameters fail validation
     '''
+    num_players = len(players)
     secret_int = serialization.convert_bytestring_to_int(secret)
 
     # generate shares of the secret s: ((x_1, s_1), . . . , (x_n, s_n))
-    int_shares = [pairing.elegant_pair(*share) for share in sss._share_secret_int(num_players, reconstruction_threshold, max_secret_length + 1, secret_int)]
+    int_shares = [pairing.elegant_pair(*share) for share in
+                  sss._share_secret_int(num_players, reconstruction_threshold, max_secret_length + 1, secret_int)]
 
-    batch_keys, batch_vectors = {}, {}  # TODO: is there a more pythonic way to to do this?
-    for share in int_shares:  # generate n MAC keys k_ij and vectors t_ij = MAC(k_ij, s_j) per share s_j
-        batch_keys[share], batch_vectors[share] = authentication.generate_batch(num_players, share, max_secret_length)
+    # assign shares to players
+    shares_map = {player: share for (player, share) in zip(players, int_shares)}
 
-    return make_robust_shares(int_shares, batch_keys, batch_vectors)
+    batch_keys, batch_vectors = {}, {}
+    for player in players:  # generate n MAC keys k_ij and vectors t_ij = MAC(k_ij, s_j) per share s_j
+        keys, vectors = authentication.generate_batch(num_players, shares_map[player], max_secret_length)
+        batch_keys[player] = {player: key for (player, key) in zip(players, keys)}
+        batch_vectors[player] = {player: vector for (player, vector) in zip(players, vectors)}
+
+    return make_robust_shares(shares_map, batch_keys, batch_vectors)
 
 
-def reconstruct_secret(num_players, reconstruction_threshold, max_secret_length, robust_shares):
+def make_map(dict_key, robust_shares_map, invalid_players):
+    mapping = {}
+    for player in robust_shares_map.keys():
+        try:
+            mapping[player] = robust_shares_map[player][dict_key]
+        except KeyError:
+            invalid_players.add(player)
+    return mapping
+
+
+def validate_shares(shares_map, invalid_players):
+    for player, share in shares_map.items():
+        if not isinstance(share, (int, long)):
+            invalid_players.add(player)
+
+
+def validate_vectors(vectors_from_providers, invalid_players):
+    for player, vectors in vectors_from_providers.items():
+        for target in vectors_from_providers.keys():
+            if not isinstance(vectors, dict):
+                invalid_players.add(player)
+                continue
+
+            try:
+                integer_valued = isinstance(vectors[target][0], (int, long)) and isinstance(vectors[target][1], (int, long))
+                if not (integer_valued and len(vectors[target]) == 2):
+                    invalid_players.add(player)
+            except (KeyError, IndexError):
+                invalid_players.add(player)
+
+
+def validate_keys(keys_for_providers, invalid_players):
+    for player, keys in keys_for_providers.items():
+        for target in keys_for_providers.keys():
+            if not isinstance(keys, dict):
+                invalid_players.add(player)
+                continue
+
+            try:
+                if not isinstance(keys[target], (int, long)):
+                    invalid_players.add(player)
+            except KeyError:
+                invalid_players.add(player)
+
+
+def clean_map(mapping, invalid_players):
+    for player in mapping.keys():
+        if player in invalid_players:
+            del mapping[player]
+
+
+def _get_player_to_verifies_map(shares_map, keys_for_providers, vectors_from_providers, max_secret_length, invalid_players):
+    verifies = defaultdict(list)  # map provider to list of providers it verifies
+    for verifier in shares_map.keys():
+        for player, share in shares_map.items():
+            if authentication.validate(keys_for_providers[verifier][player], vectors_from_providers[player][verifier], share, max_secret_length):
+                verifies[verifier].append(player)
+    return {verifier: tuple(sorted(players)) for verifier, players in verifies.items()}
+
+
+def _get_player_to_secret_map(verifies_map, shares_map, num_players, reconstruction_threshold, max_secret_length):
+    secret_map = {}
+    for verifier, players in verifies_map.items():
+        if (len(players) >= reconstruction_threshold):
+            tuple_shares = [pairing.elegant_unpair(share) for share in [shares_map[player] for player in players]]
+            try:
+                secret = serialization.convert_int_to_bytestring(sss._reconstruct_secret_int(num_players, max_secret_length + 1, tuple_shares))
+            except ValueError:
+                pass  # attempts by dishonest players to collude will cause a parse failure
+            else:
+                secret_map[verifier] = secret
+    return secret_map
+
+
+def _swap_and_combine_by_value(original_dict):
+    swapped = defaultdict(list)
+    for key, value in original_dict.items():
+        swapped[value].append(key)
+    return swapped
+
+
+def _vote(voting_blocks, reconstruction_threshold):
+    authorized = []  # parallel lists of authorized shares and verifiers
+    for secret, verifiers in voting_blocks.items():
+        if len(verifiers) >= reconstruction_threshold:  # TODO: which to take when we have more than 1 voting block?
+            authorized.append((secret, verifiers))
+    return authorized
+
+
+def reconstruct_secret(num_players, reconstruction_threshold, max_secret_length, json_map):
     '''
     Args:
         num_players, the total number of players (can be greater than or equal to the number of shares)
         reconstruction_threshold, the number of shares needed for reconstruction
         max_secret_length, the maximum length of the secret represented as a bytestring (ie, len(secret))
-        robust_shares, a list of JSON strings collected from share_secret
+        json_map, a map of player string ids to JSON strings dispersed from share_secret
 
         Note: (TODO) - for now assume that len(shares) >= reconstruction_threshold
     Returns:
-        result, a tuple of (secret, malicious_shares_list)
-            secret: the bytestring that was shared by share_secret
-            malicious_shares_list: the list of corrupt shares that fail authentication
+        a tuple containing
+            the bytestring that was shared by share_secret
+            a subset of the providers whose shares could be used for reconstruction of that secret
+            a subset of providers who are malicious
     Raises:
-        ValueError, share that were believed to be valid could not be parsed. Indicates some IllegalState.
         FatalReconstructionFailure, custom exception raised when the number of honest shares is less than reconstruction_threshold
     '''
+    invalid_players = set()
+    robust_shares_map = {}
+    for player, robust_share in json_map.items():
+        try:
+            robust_shares_map[player] = unjsonify_robust_share(robust_share)
+        except ValueError:
+            invalid_players.add(player)
 
-    shares, share_keys, share_vectors = zip(*[unjsonify_robust_share(robust_share) for robust_share in robust_shares])
+    # TODO: verify more parameters? SHOULD DO THIS IN SHARING
+    if (len(robust_shares_map) < reconstruction_threshold):
+        raise FatalReconstructionFailure
 
-    tuple_shares = [pairing.elegant_unpair(share) for share in shares]
-    return serialization.convert_int_to_bytestring(sss._reconstruct_secret_int(num_players, max_secret_length + 1, tuple_shares))
+    shares_map = make_map("share", robust_shares_map, invalid_players)
+    keys_for_providers = make_map("keys", robust_shares_map, invalid_players)
+    vectors_from_providers = make_map("vectors", robust_shares_map, invalid_players)
 
-    # TODO: for now, just call sss reconstruction and see if we can pass the basic sharing tests
+    validate_shares(shares_map, invalid_players)
+    validate_keys(keys_for_providers, invalid_players)
+    validate_vectors(vectors_from_providers, invalid_players)
 
-    # TODO: verify parameters
+    clean_map(shares_map, invalid_players)
+    clean_map(keys_for_providers, invalid_players)
+    clean_map(vectors_from_providers, invalid_players)
 
-    # create a dictionary of number tags to each share (bytestring)
+    verifies_map = _get_player_to_verifies_map(shares_map, keys_for_providers, vectors_from_providers, max_secret_length, invalid_players)
 
-    # then create a dictionary of number tags to number tags that have been verified by that one
+    secret_map = _get_player_to_secret_map(verifies_map, shares_map, num_players, reconstruction_threshold, max_secret_length)
 
-    # look for a t + 1 or great agreement
-        # TODO: how to do this cleanly?
-        #   for each number tag, add to list all the number tags that it authorizes
-        # ex.
-        #   dict = {1: [1, 2, 3], 2: [2, 3, 1], 3: [3, 2, 1], 4: [4, 5], 5: [4, 5]}
+    print secret_map
 
-        #   then take that dictionary and convert the lists to tuples of sorted lists
-        # ex.
-        #   dict = {key: tuple(sorted(value)) for key, value in dict.items()}
+    voting_blocks = _swap_and_combine_by_value(secret_map)
+    authorized = _vote(voting_blocks, reconstruction_threshold)
 
-        #   combine based on values
-        # ex.
-        #   groups = defaultdict(list)
-        #   for key, value in dict.items():
-        #       groups[value].append(key)
+    print authorized
 
-        #   look for lists of values that are greater than or equal to t + 1
-        # ex.
-        #   invalidated = []
-        #   for key, value in groups.items():
-        #       if len(value) >= reconstruction_threshold:
-        #           authorized = key
-        #       else:
-        #           for k in key:
-        #               invalidated.append(k)
+    if len(authorized) != 1:
+        raise FatalReconstructionFailure
 
-    # take the number tags that were not in that agreement and make malicious_shares_list from their shares
+    secret, voting_players = authorized[0]
+    verified_players = {player for voter in voting_players for player in verifies_map[voter]}
 
-    # take the number tags from that agreement to get back bytestring shares, and pass to sss.reconstruct_secret
-
-    # then return bytestring (secret, malicious_shares_list)
-
-
-
-# ______________________________________________________________________________________________________________________________
-
-
-# ______________________________________________________________________________________________________________________________
-
-# Shamir Secret Sharing with an honest dealer
-
-# Refer to the corresponding section in the Rabin Ben-Or paper:
-    # https://cs.umd.edu/~gasarch/TOPICS/secretsharing/rabinVSS.pdf
-
-# guarantee: "When the secret is revealed we want that
-    # all knights will agree on the same value and
-    # that it will be the original secret the dealer shared."
-
-# TODOS:
-    # hard-code a massive prime for auth
-
-# parameters:
-    # n: number of providers (n >= 2t + 1)
-    # t: t players get no info, t + 1 can reconstruct
-    # s: the secret
-    # k is a security parameter
-        # selected so that the probability of error is 2^(-k)
-    # ps: a (potentially small) pubic prime used for defining polynomial coefficients
-    # pv: a large, private prime used for check vectors
-
-# sharing the secret (Phase 1) -
-    # gather shares f(alpha_i)
-        # (see sss.py)
-
-    # for each f(alpha_i) generate a check vector
-        # (see authentication.py)
-
-    # disperse values to each player, Pi
-        # f(alpha_i), the players share
-        # y_i1, ..., y_in which the y_ij are the "tags" for Pi
-        # (b1i, c_1i), ..., (bni, c_ni)
-            # the (b_ji, c_ji) values are used by Pi to authenticate players Pj's tag
-
-# recovering the secret (Phase 2) -
-    # fix: just make the checks below ourselves by requesting info rather than sending it out
-
-    # goal: look for agreement across a subset of t + 1 of the shares
-
-    # retrieve values from all players
-
-    # calculate all pairs (f(alpha_i), y_ij), i != j
-
-    # verify with all (b_ji, c_ji) that c_ji = f(alpha_j) + b_ji y_ji
-        # accept or reject accordingly
-        # (see authentication.py)
-
-    # if pieces f(alpha_i1), ..., f(alpha_ir), r >= t + 1 are accepted for player Pi
-    # then s can be calculated with these r shares
-        # (see sss.py)
+    return secret, list(verified_players), list(invalid_players)
