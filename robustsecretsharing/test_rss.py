@@ -74,7 +74,7 @@ def share_and_recover(players, reconstruction_threshold, secret, end):
         secret, the secret to be shared
         end, the number of shares to use in reconstruction
     Returns:
-        a tuple of secret, malicious_players list
+        the result of robust reconstruction
     '''
     max_secret_length = len(secret)
     shares_subset = get_shares_subset(players, reconstruction_threshold, secret, end)
@@ -90,7 +90,7 @@ def corrupt_share_and_recover(num_players, reconstruction_threshold, max_secret_
         shares_subset, a dictionary of a subset of players to json robust shares
         num_corrupt, the number of players that will corrupt their shares
     Returns:
-        a tuple of secret, malicious_players list
+        the result of robust reconstruction
     '''
     corrupters = {player: rss.unjsonify_robust_share(share) for player, share in shares_subset.items()[:num_corrupt]}
 
@@ -99,7 +99,6 @@ def corrupt_share_and_recover(num_players, reconstruction_threshold, max_secret_
         share_dict["share"] /= 4
 
     shares = combine_testing_dictionaries(shares_subset, jsonify_dict(corrupters))
-
     return rss.reconstruct_secret(num_players, reconstruction_threshold, max_secret_length, shares)
 
 
@@ -113,7 +112,7 @@ def corrupt_vectors_and_recover(num_players, reconstruction_threshold, max_secre
         num_corrupt, the number of players that will corrupt their vectors
         degree_of_corruption, how many of their own vectors each corrupting player will corrupt
     Returns:
-        a tuple of secret, malicious_players list
+        the result of robust reconstruction
     '''
     corrupters = {player: rss.unjsonify_robust_share(share) for player, share in shares_subset.items()[:num_corrupt]}
     verifiers = [player for player in shares_subset.keys()[:degree_of_corruption]]
@@ -125,7 +124,6 @@ def corrupt_vectors_and_recover(num_players, reconstruction_threshold, max_secre
             share_dict["vectors"][verifier][1] /= 4
 
     shares = combine_testing_dictionaries(shares_subset, jsonify_dict(corrupters))
-
     return rss.reconstruct_secret(num_players, reconstruction_threshold, max_secret_length, shares)
 
 
@@ -139,7 +137,7 @@ def corrupt_keys_and_recover(num_players, reconstruction_threshold, max_secret_l
         num_corrupt, the number of players that will corrupt auth keys
         degree_of_corruption, how many of the keys each corrupting player will corrupt
     Returns:
-        a tuple of secret, malicious_players list
+        the result of robust reconstruction
     '''
     corrupters = {player: rss.unjsonify_robust_share(share) for player, share in shares_subset.items()[:num_corrupt]}
     verifiers = [player for player in shares_subset.keys()[:degree_of_corruption]]
@@ -150,7 +148,6 @@ def corrupt_keys_and_recover(num_players, reconstruction_threshold, max_secret_l
             share_dict["keys"][verifier] /= 4
 
     shares = combine_testing_dictionaries(shares_subset, jsonify_dict(corrupters))
-
     return rss.reconstruct_secret(num_players, reconstruction_threshold, max_secret_length, shares)
 
 
@@ -163,14 +160,14 @@ def collude_and_recover(num_players, reconstruction_threshold, max_secret_length
         shares_subset, a dictionary of a subset of players to json robust shares
         num_corrupt, the number of players that will collude
     Returns:
-        a tuple of secret, malicious_players list
+        the result of robust reconstruction
     '''
     max_secret_length = len(secret)
 
     colluders = {player: rss.unjsonify_robust_share(share) for player, share in shares_subset.items()[:num_collude]}
 
     for player, player_dict in colluders.items():
-        player_dict["share"] /= 2  # create a new share, TODO: how to do this?!
+        player_dict["share"] /= 2
         for verifier, verifier_dict in colluders.items():
             new_key, new_vector = authentication.generate_check_vector(player_dict["share"], max_secret_length)
             verifier_dict["keys"][player] = new_key
@@ -183,7 +180,6 @@ def collude_and_recover(num_players, reconstruction_threshold, max_secret_length
                                            player_dict["share"], max_secret_length) is True
 
     shares = combine_testing_dictionaries(shares_subset, jsonify_dict(colluders))
-
     return rss.reconstruct_secret(num_players, reconstruction_threshold, max_secret_length, shares)
 
 
@@ -203,10 +199,6 @@ def verify_results(recovered_secret, original_secret, valid_players, honest_play
         sorted(valid_players) == sorted(honest_players) and \
         sorted(invalid_players) == sorted(dishonest_players)
 
-###################################################### SHARE ######################################################
-# TODO: test auth on these as well!
-# TODO: make the parameters correct
-
 
 def test_robust_min_shares():
     num_players = 5
@@ -215,7 +207,8 @@ def test_robust_min_shares():
 
     players = get_ids(num_players)
 
-    recovered_secret, valid_players, invalid_players = share_and_recover(players, reconstruction_threshold, secret, end)
+    recovered_secret, valid_players, invalid_players = \
+        share_and_recover(players, reconstruction_threshold, secret, end)
     verify_results(secret, recovered_secret, valid_players, players, invalid_players, [])
 
 
@@ -226,7 +219,8 @@ def test_robust_max_shares():
 
     players = get_ids(num_players)
 
-    recovered_secret, valid_players, invalid_players = share_and_recover(players, reconstruction_threshold, secret, end)
+    recovered_secret, valid_players, invalid_players = \
+        share_and_recover(players, reconstruction_threshold, secret, end)
     verify_results(secret, recovered_secret, valid_players, players, invalid_players, [])
 
 
@@ -240,7 +234,8 @@ def test_robust_secret_with_leading_zeroes():
     # Create secret
     trailing_zero_secret = '\x00\x00e\x9c\x9e\x16\xe9\xea\x15+\xbf]\xebx;o\xef\xc9X1c\xaepj\xebj\x12\xe3r\xcd\xeaM'
 
-    recovered_secret, valid_players, invalid_players = share_and_recover(players, reconstruction_threshold, trailing_zero_secret, end)
+    recovered_secret, valid_players, invalid_players = \
+        share_and_recover(players, reconstruction_threshold, trailing_zero_secret, end)
     verify_results(trailing_zero_secret, recovered_secret, valid_players, players, invalid_players, [])
 
 
@@ -252,7 +247,8 @@ def test_robust_many_players():
 
     secret = '\x0A'
 
-    recovered_secret, valid_players, invalid_players = share_and_recover(players, reconstruction_threshold, secret, reconstruction_threshold)
+    recovered_secret, valid_players, invalid_players = \
+        share_and_recover(players, reconstruction_threshold, secret, reconstruction_threshold)
     verify_results(secret, recovered_secret, valid_players, players, invalid_players, [])
 
 
@@ -262,7 +258,8 @@ def test_robust_2_of_3_sharing():
 
     players = get_ids(num_players)
 
-    recovered_secret, valid_players, invalid_players = share_and_recover(players, reconstruction_threshold, alt_secret, reconstruction_threshold)
+    recovered_secret, valid_players, invalid_players = \
+        share_and_recover(players, reconstruction_threshold, alt_secret, reconstruction_threshold)
     verify_results(secret, recovered_secret, valid_players, players, invalid_players, [])
 
 
@@ -272,7 +269,8 @@ def test_robust_4_of_7_sharing():
 
     players = get_ids(num_players)
 
-    recovered_secret, valid_players, invalid_players = share_and_recover(players, reconstruction_threshold, alt_secret, reconstruction_threshold)
+    recovered_secret, valid_players, invalid_players = \
+        share_and_recover(players, reconstruction_threshold, alt_secret, reconstruction_threshold)
     verify_results(secret, recovered_secret, valid_players, players, invalid_players, [])
 
 
@@ -282,7 +280,8 @@ def test_robust_5_of_9_sharing():
 
     players = get_ids(num_players)
 
-    recovered_secret, valid_players, invalid_players = share_and_recover(players, reconstruction_threshold, alt_secret, reconstruction_threshold)
+    recovered_secret, valid_players, invalid_players = \
+        share_and_recover(players, reconstruction_threshold, alt_secret, reconstruction_threshold)
     verify_results(alt_secret, recovered_secret, valid_players, players, invalid_players, [])
 
 
@@ -292,7 +291,8 @@ def test_robust_2_of_2_sharing():
 
     players = get_ids(num_players)
 
-    recovered_secret, valid_players, invalid_players = share_and_recover(players, reconstruction_threshold, alt_secret, reconstruction_threshold)
+    recovered_secret, valid_players, invalid_players = \
+        share_and_recover(players, reconstruction_threshold, alt_secret, reconstruction_threshold)
     verify_results(alt_secret, recovered_secret, valid_players, players, invalid_players, [])
 
 
@@ -331,10 +331,6 @@ def test_robust_bad_configuration_prime_none():
         rss.share_secret(players, reconstruction_threshold, 5000, secret)
 
 
-###################################################### AUTH ######################################################
-
-#   corruption of share
-
 def test_honest_less_dishonest_greater_corrupt_share_failure():
     num_players = 8
     reconstruction_threshold = 4
@@ -348,9 +344,7 @@ def test_honest_less_dishonest_greater_corrupt_share_failure():
         corrupt_share_and_recover(num_players, reconstruction_threshold, len(secret), shares_subset, dishonest)
 
 
-#   corruption of vectors - OTHER PLAYERS REJECT THE CORRUPTER
-
-def test_honest_less_dishonest_greater_corrupt_some_vectors_failure():  # TODO: is this desired behavior?! should they all agree?
+def test_honest_less_dishonest_greater_corrupt_some_vectors_failure():
     num_players = 20
     reconstruction_threshold = 10
     num_corrupt = reconstruction_threshold
@@ -364,9 +358,7 @@ def test_honest_less_dishonest_greater_corrupt_some_vectors_failure():  # TODO: 
         corrupt_vectors_and_recover(num_players, reconstruction_threshold, len(secret), shares_subset, num_corrupt, degree_of_corruption)
 
 
-#   corruption of keys - THE CORRUPTER REJECTS OTHER PLAYERS
-
-def test_honest_less_dishonest_greater_corrupt_some_keys_failure():  # TODO: is this desired behavior?! should they all agree?
+def test_honest_less_dishonest_greater_corrupt_some_keys_failure():
     num_players = 20
     reconstruction_threshold = 10
     num_corrupt = reconstruction_threshold
@@ -380,13 +372,11 @@ def test_honest_less_dishonest_greater_corrupt_some_keys_failure():  # TODO: is 
         corrupt_keys_and_recover(num_players, reconstruction_threshold, len(secret), shares_subset, num_corrupt, degree_of_corruption)
 
 
-#   corruption of share
-
 def test_honest_less_dishonest_equal_corrupt_share_failure():
     num_players = 20
     reconstruction_threshold = 10
     dishonest = reconstruction_threshold - 1
-    end = 18
+    end = 18  # only 9 left honest after 9 are corrupted
 
     players = get_ids(num_players)
     shares_subset = get_shares_subset(players, reconstruction_threshold, secret, end)
@@ -395,14 +385,12 @@ def test_honest_less_dishonest_equal_corrupt_share_failure():
         corrupt_share_and_recover(num_players, reconstruction_threshold, len(secret), shares_subset, dishonest)
 
 
-#   corruption of vectors - OTHER PLAYERS REJECT THE CORRUPTER
-
-def test_honest_less_dishonest_equal_corrupt_some_vectors_failure():  # TODO: is this desired behavior?!
+def test_honest_less_dishonest_equal_corrupt_some_vectors_failure():
     num_players = 20
     reconstruction_threshold = 7
     num_corrupt = reconstruction_threshold - 1
-    end = 10
-    degree_of_corruption = num_players / 2  # for a given corrupting provider, corrupt all of its keys
+    end = 10   # 6 are dishonest so only 4 are left honest
+    degree_of_corruption = num_players / 2
 
     players = get_ids(num_players)
     shares_subset = get_shares_subset(players, reconstruction_threshold, secret, end)
@@ -411,14 +399,12 @@ def test_honest_less_dishonest_equal_corrupt_some_vectors_failure():  # TODO: is
         corrupt_vectors_and_recover(num_players, reconstruction_threshold, len(secret), shares_subset, num_corrupt, degree_of_corruption)
 
 
-#   corruption of keys - THE CORRUPTER REJECTS OTHER PLAYERS
-
 def test_honest_less_dishonest_less_corrupt_some_keys_failure():
     num_players = 20
     reconstruction_threshold = 7
     num_corrupt = 4
     end = 10
-    degree_of_corruption = num_players / 2  # for a given corrupting provider, corrupt all of its keys
+    degree_of_corruption = num_players / 2
 
     players = get_ids(num_players)
     shares_subset = get_shares_subset(players, reconstruction_threshold, secret, end)
@@ -427,9 +413,6 @@ def test_honest_less_dishonest_less_corrupt_some_keys_failure():
         corrupt_keys_and_recover(num_players, reconstruction_threshold, len(secret), shares_subset, num_corrupt, degree_of_corruption)
 
 
-######################### >= threshold honest, <= threshold - 1 dishonest #########################
-
-#   no corruption
 def test_all_honest():
     num_players = 5
     reconstruction_threshold = 2
@@ -437,11 +420,10 @@ def test_all_honest():
 
     players = get_ids(num_players)
 
-    recovered_secret, authorized_players, invalid_players = share_and_recover(players, reconstruction_threshold, secret, end)
+    recovered_secret, authorized_players, invalid_players = \
+        share_and_recover(players, reconstruction_threshold, secret, end)
     assert verify_results(recovered_secret, secret, authorized_players, players, invalid_players, []) is True
 
-
-#   corruption of share
 
 def test_honest_greater_dishonest_equal_corrupt_share():
     num_players = 20
@@ -454,7 +436,9 @@ def test_honest_greater_dishonest_equal_corrupt_share():
 
     recovered_secret, authorized_players, invalid_players = \
         corrupt_share_and_recover(num_players, reconstruction_threshold, len(secret), shares_subset, dishonest)
-    assert verify_results(recovered_secret, secret, authorized_players, shares_subset.keys()[dishonest:], invalid_players, []) is True
+    assert verify_results(recovered_secret, secret,
+                          authorized_players, shares_subset.keys()[dishonest:],
+                          invalid_players, []) is True
 
 
 def test_honest_greater_dishonest_less_corrupt_share():
@@ -468,24 +452,26 @@ def test_honest_greater_dishonest_less_corrupt_share():
 
     recovered_secret, authorized_players, invalid_players = \
         corrupt_share_and_recover(num_players, reconstruction_threshold, len(secret), shares_subset, dishonest)
-    assert verify_results(recovered_secret, secret, authorized_players, shares_subset.keys()[dishonest:], invalid_players, []) is True
+    assert verify_results(recovered_secret, secret,
+                          authorized_players, shares_subset.keys()[dishonest:],
+                          invalid_players, []) is True
 
-
-#   corruption of vectors - OTHER PLAYERS REJECT THE CORRUPTER
 
 def test_greater_honest_less_dishonest_corrupt_half_vectors():
     reconstruction_threshold = 7
     num_corrupt = 1
     num_players = reconstruction_threshold + num_corrupt
     end = num_players
-    degree_of_corruption = num_players / 2  # for a given corrupting provider, corrupt half of its used vectors
+    degree_of_corruption = num_players / 2
 
     players = get_ids(num_players)
     shares_subset = get_shares_subset(players, reconstruction_threshold, secret, end)
 
     recovered_secret, authorized_players, invalid_players = \
         corrupt_vectors_and_recover(num_players, reconstruction_threshold, len(secret), shares_subset, num_corrupt, degree_of_corruption)
-    assert verify_results(recovered_secret, secret, authorized_players, shares_subset.keys(), invalid_players, []) is True
+    assert verify_results(recovered_secret, secret,
+                          authorized_players, shares_subset.keys(),
+                          invalid_players, []) is True
 
 
 def test_greater_honest_equal_dishonest_corrupt_all_vectors():
@@ -493,19 +479,19 @@ def test_greater_honest_equal_dishonest_corrupt_all_vectors():
     num_corrupt = reconstruction_threshold - 1
     num_players = reconstruction_threshold + num_corrupt
     end = num_players
-    degree_of_corruption = num_players  # for a given corrupting provider, corrupt all of its vectors
+    degree_of_corruption = num_players
 
     players = get_ids(num_players)
     shares_subset = get_shares_subset(players, reconstruction_threshold, secret, end)
 
     recovered_secret, authorized_players, invalid_players = \
         corrupt_vectors_and_recover(num_players, reconstruction_threshold, len(secret), shares_subset, num_corrupt, degree_of_corruption)
-    assert verify_results(recovered_secret, secret, authorized_players, shares_subset.keys()[num_corrupt:], invalid_players, []) is True
+    assert verify_results(recovered_secret, secret,
+                          authorized_players, shares_subset.keys()[num_corrupt:],
+                          invalid_players, []) is True
 
 
 def test_greater_honest_equal_dishonest_corrupt_many_vectors():
-    # 13 players, 7 of them will reject the 6 corrupt players and reconstruct from among themselves
-    # they will agree with all the providers since no shares were corrupted
     reconstruction_threshold = 7
     num_corrupt = reconstruction_threshold - 1
     num_players = reconstruction_threshold + num_corrupt
@@ -517,22 +503,26 @@ def test_greater_honest_equal_dishonest_corrupt_many_vectors():
 
     recovered_secret, authorized_players, invalid_players = \
         corrupt_vectors_and_recover(num_players, reconstruction_threshold, len(secret), shares_subset, num_corrupt, degree_of_corruption)
-    assert verify_results(recovered_secret, secret, authorized_players, shares_subset.keys(), invalid_players, []) is True
+    assert verify_results(recovered_secret, secret,
+                          authorized_players, shares_subset.keys(),
+                          invalid_players, []) is True
 
 
-def test_greater_honest_equal_dishonest_corrupt_few_vectors():  # TODO: is this desired behavior?!
+def test_greater_honest_equal_dishonest_corrupt_few_vectors():
     reconstruction_threshold = 7
     num_corrupt = reconstruction_threshold - 1
     num_players = reconstruction_threshold + num_corrupt
     end = num_players
-    degree_of_corruption = reconstruction_threshold + 1  # corrupt too few to be noticed
+    degree_of_corruption = reconstruction_threshold + 1
 
     players = get_ids(num_players)
     shares_subset = get_shares_subset(players, reconstruction_threshold, secret, end)
 
     recovered_secret, authorized_players, invalid_players = \
         corrupt_vectors_and_recover(num_players, reconstruction_threshold, len(secret), shares_subset, num_corrupt, degree_of_corruption)
-    assert verify_results(recovered_secret, secret, authorized_players, shares_subset.keys(), invalid_players, []) is True
+    assert verify_results(recovered_secret, secret,
+                          authorized_players, shares_subset.keys(),
+                          invalid_players, []) is True
 
 
 def test_greater_honest_equal_dishonest_corrupt_no_vectors():
@@ -540,32 +530,33 @@ def test_greater_honest_equal_dishonest_corrupt_no_vectors():
     num_corrupt = reconstruction_threshold - 1
     num_players = reconstruction_threshold + num_corrupt
     end = num_players
-    degree_of_corruption = 0  # should be equivalent to no corruption
+    degree_of_corruption = 0  # should be equivalent to no corrruption
 
     players = get_ids(num_players)
     shares_subset = get_shares_subset(players, reconstruction_threshold, secret, end)
 
     recovered_secret, authorized_players, invalid_players = \
         corrupt_vectors_and_recover(num_players, reconstruction_threshold, len(secret), shares_subset, num_corrupt, degree_of_corruption)
-    assert verify_results(recovered_secret, secret, authorized_players, shares_subset.keys(), invalid_players, []) is True
+    assert verify_results(recovered_secret, secret,
+                          authorized_players, shares_subset.keys(),
+                          invalid_players, []) is True
 
 
-#   corruption of keys - THE CORRUPTER REJECTS OTHER PLAYERS
-
-
-def test_greater_honest_equal_dishonest_corrupt_all_keys():  # TODO: is this desired behavior?!
+def test_greater_honest_equal_dishonest_corrupt_all_keys():
     reconstruction_threshold = 7
     num_corrupt = reconstruction_threshold - 1
     num_players = reconstruction_threshold + num_corrupt
     end = num_players
-    degree_of_corruption = num_players  # for a given corrupting provider, corrupt all of its keys
+    degree_of_corruption = num_players
 
     players = get_ids(num_players)
     shares_subset = get_shares_subset(players, reconstruction_threshold, secret, end)
 
     recovered_secret, authorized_players, invalid_players = \
         corrupt_keys_and_recover(num_players, reconstruction_threshold, len(secret), shares_subset, num_corrupt, degree_of_corruption)
-    assert verify_results(recovered_secret, secret, authorized_players, shares_subset.keys(), invalid_players, []) is True
+    assert verify_results(recovered_secret, secret,
+                          authorized_players, shares_subset.keys(),
+                          invalid_players, []) is True
 
 
 def test_greater_honest_equal_dishonest_corrupt_many_keys():
@@ -573,29 +564,33 @@ def test_greater_honest_equal_dishonest_corrupt_many_keys():
     num_corrupt = reconstruction_threshold - 1
     num_players = reconstruction_threshold + num_corrupt
     end = num_players
-    degree_of_corruption = num_players - reconstruction_threshold + 1  # for a given corrupting provider, corrupt just enough to trigger failure
+    degree_of_corruption = num_players - reconstruction_threshold + 1
 
     players = get_ids(num_players)
     shares_subset = get_shares_subset(players, reconstruction_threshold, secret, end)
 
     recovered_secret, authorized_players, invalid_players = \
         corrupt_keys_and_recover(num_players, reconstruction_threshold, len(secret), shares_subset, num_corrupt, degree_of_corruption)
-    assert verify_results(recovered_secret, secret, authorized_players, shares_subset.keys(), invalid_players, []) is True
+    assert verify_results(recovered_secret, secret,
+                          authorized_players, shares_subset.keys(),
+                          invalid_players, []) is True
 
 
-def test_greater_honest_equal_dishonest_corrupt_few_keys():  # TODO: is this desired behavior?!
+def test_greater_honest_equal_dishonest_corrupt_few_keys():
     reconstruction_threshold = 7
     num_corrupt = reconstruction_threshold - 1
     num_players = reconstruction_threshold + num_corrupt
     end = num_players
-    degree_of_corruption = reconstruction_threshold + 1  # corrupt too few to be noticed
+    degree_of_corruption = reconstruction_threshold + 1
 
     players = get_ids(num_players)
     shares_subset = get_shares_subset(players, reconstruction_threshold, secret, end)
 
     recovered_secret, authorized_players, invalid_players = \
         corrupt_keys_and_recover(num_players, reconstruction_threshold, len(secret), shares_subset, num_corrupt, degree_of_corruption)
-    assert verify_results(recovered_secret, secret, authorized_players, shares_subset.keys(), invalid_players, []) is True
+    assert verify_results(recovered_secret, secret,
+                          authorized_players, shares_subset.keys(),
+                          invalid_players, []) is True
 
 
 def test_greater_honest_equal_dishonest_corrupt_no_keys():
@@ -610,7 +605,9 @@ def test_greater_honest_equal_dishonest_corrupt_no_keys():
 
     recovered_secret, authorized_players, invalid_players = \
         corrupt_keys_and_recover(num_players, reconstruction_threshold, len(secret), shares_subset, num_corrupt, degree_of_corruption)
-    assert verify_results(recovered_secret, secret, authorized_players, shares_subset.keys(), invalid_players, []) is True
+    assert verify_results(recovered_secret, secret,
+                          authorized_players, shares_subset.keys(),
+                          invalid_players, []) is True
 
 
 def test_collusion():
