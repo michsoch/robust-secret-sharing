@@ -45,7 +45,7 @@ def jsonify_dict(shares):
     '''
     json_shares = {}
     for player in shares:
-        json_shares[player] = rss.jsonify_robust_share(shares[player]["share"], shares[player]["keys"], shares[player]["vectors"])
+        json_shares[player] = rss._serialize_robust_share(shares[player]["share"], shares[player]["keys"], shares[player]["vectors"])
     return json_shares
 
 
@@ -92,7 +92,7 @@ def corrupt_share_and_recover(num_players, reconstruction_threshold, max_secret_
     Returns:
         the result of robust reconstruction
     '''
-    corrupters = {player: rss.unjsonify_robust_share(share) for player, share in shares_subset.items()[:num_corrupt]}
+    corrupters = {player: rss._deserialize_robust_share(share) for player, share in shares_subset.items()[:num_corrupt]}
 
     # corrupt share data
     for player, share_dict in corrupters.items():
@@ -114,7 +114,7 @@ def corrupt_vectors_and_recover(num_players, reconstruction_threshold, max_secre
     Returns:
         the result of robust reconstruction
     '''
-    corrupters = {player: rss.unjsonify_robust_share(share) for player, share in shares_subset.items()[:num_corrupt]}
+    corrupters = {player: rss._deserialize_robust_share(share) for player, share in shares_subset.items()[:num_corrupt]}
     verifiers = [player for player in shares_subset.keys()[:degree_of_corruption]]
 
     # corrupt vector data
@@ -139,7 +139,7 @@ def corrupt_keys_and_recover(num_players, reconstruction_threshold, max_secret_l
     Returns:
         the result of robust reconstruction
     '''
-    corrupters = {player: rss.unjsonify_robust_share(share) for player, share in shares_subset.items()[:num_corrupt]}
+    corrupters = {player: rss._deserialize_robust_share(share) for player, share in shares_subset.items()[:num_corrupt]}
     verifiers = [player for player in shares_subset.keys()[:degree_of_corruption]]
 
     # corrupt key data
@@ -164,7 +164,7 @@ def collude_and_recover(num_players, reconstruction_threshold, max_secret_length
     '''
     max_secret_length = len(secret)
 
-    colluders = {player: rss.unjsonify_robust_share(share) for player, share in shares_subset.items()[:num_collude]}
+    colluders = {player: rss._deserialize_robust_share(share) for player, share in shares_subset.items()[:num_collude]}
 
     for player, player_dict in colluders.items():
         player_dict["share"] /= 2
@@ -193,7 +193,7 @@ def verify_results(recovered_secret, original_secret, valid_players, honest_play
         invalid_players, a subset of dishonest players
         dishonest_players, a subset of players constructed to be dishonest
     Returns:
-        True if the results of reconstruction are verified and False otherwise
+        True if the results of reconstruction match the constructed test parameters and False otherwise
     '''
     return recovered_secret == original_secret and \
         sorted(valid_players) == sorted(honest_players) and \
@@ -704,7 +704,7 @@ def test_json_parse_make_share_string():
 
     players = get_ids(num_players)
     shares_subset = get_shares_subset(players, reconstruction_threshold, secret, end)
-    unjsonify_shares = {player: rss.unjsonify_robust_share(share) for player, share in shares_subset.items()[:num_broken]}
+    unjsonify_shares = {player: rss._deserialize_robust_share(share) for player, share in shares_subset.items()[:num_broken]}
 
     for player, share in unjsonify_shares.items():
         share["share"] = str(share["share"])
@@ -726,7 +726,7 @@ def test_json_parse_remove_vectors():
 
     players = get_ids(num_players)
     shares_subset = get_shares_subset(players, reconstruction_threshold, secret, end)
-    unjsonify_shares = {player: rss.unjsonify_robust_share(share) for player, share in shares_subset.items()[:num_broken]}
+    unjsonify_shares = {player: rss._deserialize_robust_share(share) for player, share in shares_subset.items()[:num_broken]}
 
     for player, share in unjsonify_shares.items():
         for vector in share["vectors"].keys()[:num_players / 2]:
@@ -749,7 +749,7 @@ def test_json_parse_remove_keys():
 
     players = get_ids(num_players)
     shares_subset = get_shares_subset(players, reconstruction_threshold, secret, end)
-    unjsonify_shares = {player: rss.unjsonify_robust_share(share) for player, share in shares_subset.items()[:num_broken]}
+    unjsonify_shares = {player: rss._deserialize_robust_share(share) for player, share in shares_subset.items()[:num_broken]}
 
     for player, share in unjsonify_shares.items():
         for key in share["keys"].keys()[:num_players / 2]:
@@ -772,7 +772,7 @@ def test_json_parse_make_vector_dict_string():
 
     players = get_ids(num_players)
     shares_subset = get_shares_subset(players, reconstruction_threshold, secret, end)
-    unjsonify_shares = {player: rss.unjsonify_robust_share(share) for player, share in shares_subset.items()[:num_broken]}
+    unjsonify_shares = {player: rss._deserialize_robust_share(share) for player, share in shares_subset.items()[:num_broken]}
 
     for player, share in unjsonify_shares.items():
         share["vectors"] = str(share["vectors"])
@@ -794,7 +794,7 @@ def test_json_parse_make_some_vectors_string():
 
     players = get_ids(num_players)
     shares_subset = get_shares_subset(players, reconstruction_threshold, secret, end)
-    unjsonify_shares = {player: rss.unjsonify_robust_share(share) for player, share in shares_subset.items()[:num_broken]}
+    unjsonify_shares = {player: rss._deserialize_robust_share(share) for player, share in shares_subset.items()[:num_broken]}
 
     for player, share in unjsonify_shares.items():
         for victim in share["vectors"].keys()[:num_players / 2]:
@@ -817,7 +817,7 @@ def test_json_parse_make_key_string():
 
     players = get_ids(num_players)
     shares_subset = get_shares_subset(players, reconstruction_threshold, secret, end)
-    unjsonify_shares = {player: rss.unjsonify_robust_share(share) for player, share in shares_subset.items()[:num_broken]}
+    unjsonify_shares = {player: rss._deserialize_robust_share(share) for player, share in shares_subset.items()[:num_broken]}
 
     for player, share in unjsonify_shares.items():
         share["keys"] = str(share["keys"])
@@ -840,7 +840,7 @@ def test_various_parse_errors():
     players = get_ids(num_players)
     shares_subset = get_shares_subset(players, reconstruction_threshold, secret, end)
 
-    unjsonify_shares = {player: rss.unjsonify_robust_share(share) for player, share in shares_subset.items()}
+    unjsonify_shares = {player: rss._deserialize_robust_share(share) for player, share in shares_subset.items()}
 
     remove_vectors_player = players[0]
     remove_vectors_share = unjsonify_shares[remove_vectors_player]
