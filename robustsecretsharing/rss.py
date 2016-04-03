@@ -88,104 +88,115 @@ def share_secret(players, reconstruction_threshold, max_secret_length, secret):
     # assign shares to players
     shares_map = {player: share for (player, share) in zip(players, int_shares)}
 
-    batch_keys, batch_vectors = {}, {}
+    batch_keys, batch_vectors = defaultdict(dict), defaultdict(dict)
     for player in players:  # generate n MAC keys k_ij and vectors t_ij = MAC(k_ij, s_j) per share s_j
         keys, vectors = authentication.generate_batch(num_players, shares_map[player], max_secret_length + 1)
-        batch_keys[player] = {player: key for (player, key) in zip(players, keys)}
-        batch_vectors[player] = {player: vector for (player, vector) in zip(players, vectors)}
+        for player_id, key, vector in zip(players, keys, vectors):
+            batch_keys[player][player_id] = key
+            batch_vectors[player][player_id] = vector
 
     return _make_robust_shares(shares_map, batch_keys, batch_vectors)
 
 
-def _map_player_to_attribute(robust_shares_map, dict_key, invalid_players):
+def _map_player_to_attributes(robust_shares_map, invalid_players):
     '''
-    Map each player to the value in their robust share dictionary specified by the given attribute
-    If the robust share dictionary for that player does not have the given attribute,
+    Create a dictionary from player to attribute value for "share", "keys", and "vectors" attributes
+    If the robust share dictionary for a given player does not have all expected attributes,
     add that player to the invalid_players set.
     Args:
         robust_shares_map, a dictionary of string player ids to a dictionary with attributes
             "share", keys", and "vectors"
-        dict_key, one of "share", keys", and "vectors"
         invalid_players, a growing set of players whose shares cause structural errors
     Returns:
-        a dictionary of string player id to
-        whichever of its attributes from robust_shares_map was specified by dict_key
+        a tuple of 3 dictionaries that each map string player ids to one of the attributes of robust_shares_map
+        each of these dictionaries will have the same set of keys
     '''
-    mapping = {}
+    shares_map, keys_for_players, vectors_from_players = {}, {}, {}
     for player in robust_shares_map.keys():
         try:
-            mapping[player] = robust_shares_map[player][dict_key]
+            share = robust_shares_map[player]["share"]
+            keys = robust_shares_map[player]["keys"]
+            vectors = robust_shares_map[player]["vectors"]
         except KeyError:
             invalid_players.add(player)
-    return mapping
+        else:
+            shares_map[player] = share
+            keys_for_players[player] = keys
+            vectors_from_players[player] = vectors
+    return shares_map, keys_for_players, vectors_from_players
 
 
-def _validate_shares(shares_map, invalid_players):
+def _assert_valid_share(share):
     '''
+    Asserts valid structure for the given share
     Args:
+        share, an integer share
+    '''
+    assert isinstance(share, (int, long))
+
+
+def _assert_valid_keys(players, keys):
+    '''
+    Asserts valid structure for the given keys dictionary
+    Args:
+        players, a list of all current player ids
+        keys, a given dictionary of player ids to keys
+    '''
+    assert isinstance(keys, dict)
+    for target in players:
+        assert target in keys.keys()
+        assert isinstance(keys[target], (int, long))
+
+
+def _assert_valid_vectors(players, vectors):
+    '''
+    Asserts valid structure for the given vectors dictionary
+    Args:
+        players, a list of all current player ids
+        vectors, a given dictionary of player ids to vector tuples
+    '''
+    assert isinstance(vectors, dict)
+    for target in players:
+        assert target in vectors.keys()
+        assert len(vectors[target]) == 2
+        assert isinstance(vectors[target][0], (int, long))
+        assert isinstance(vectors[target][1], (int, long))
+
+
+def _validate_attributes(players, shares_map, keys_for_players, vectors_from_players, invalid_players):
+    '''
+    Will validate the structure of all shares, keys, and vectors and add violating players to the invalid_players list
+    Args:
+        players, a list of all current player ids
         shares_map, a map of string player ids to integer shares
-        invalid_players, a growing set of players who cause structural errors
-            providers  will shares of the wrong format are added to this set
-    Will validate the structure of all shares and add violating players to the invalid_players list
-    '''
-    for player, share in shares_map.items():
-        if not isinstance(share, (int, long)):
-            invalid_players.add(player)
-
-
-def _validate_vectors(vectors_from_players, invalid_players):
-    '''
-    Args:
+        keys_for_players, a map of string players ids to keys associated with others players' shares
         vectors_from_players, a map of string players ids to vectors associated with those players shares
         invalid_players, a growing set of players who cause structural errors
-            providers with vectors of the wrong format are added to this set
-    Will validate the structure of all vectors and add violating players to the invalid_players list
     '''
-    for player, vectors in vectors_from_players.items():
-        if not isinstance(vectors, dict):
+    for player, share, keys, vectors in zip(players, shares_map.values(), keys_for_players.values(), vectors_from_players.values()):
+        try:
+            _assert_valid_share(share)
+            _assert_valid_keys(players, keys)
+            _assert_valid_vectors(players, vectors)
+        except AssertionError:
             invalid_players.add(player)
-            continue
-
-        for target in vectors_from_players.keys():
-            try:
-                integer_valued = isinstance(vectors[target][0], (int, long)) and isinstance(vectors[target][1], (int, long))
-                if not (integer_valued and len(vectors[target]) == 2):
-                    invalid_players.add(player)
-            except (KeyError, IndexError):
-                invalid_players.add(player)
 
 
-def _validate_keys(keys_for_players, invalid_players):
+def _clean_map(players, shares_map, keys_for_players, vectors_from_players, invalid_players):
     '''
     Args:
+        players, a list of all current player ids
+        shares_map, a map of string player ids to integer shares
         keys_for_players, a map of string players ids to keys associated with others players' shares
-        invalid_players, a growing set of players who cause structural errors
-            providers with keys of the wrong format are added to this set
-    Will validate the structure of all keys and add violating players to the invalid_players list
-    '''
-    for player, keys in keys_for_players.items():
-        if not isinstance(keys, dict):
-            invalid_players.add(player)
-            continue
-
-        for target in keys_for_players.keys():
-            try:
-                if not isinstance(keys[target], (int, long)):
-                    invalid_players.add(player)
-            except KeyError:
-                invalid_players.add(player)
-
-
-def _clean_map(mapping, invalid_players):
-    '''
-    Args:
-        mapping, a map of string player ids to some robust share attribute
+        vectors_from_players, a map of string players ids to vectors associated with those players shares
         invalid_players, the set thus far of players whose shares cause structural errors
-    Removes from the keys of the provided mapping all invalid_players
+    Removes all invalid_players from the keys of the three given mappings
     '''
-    for player in mapping.keys():
+    for player in players:
         if player in invalid_players:
-            del mapping[player]
+            del shares_map[player]
+            del keys_for_players[player]
+            del vectors_from_players[player]
 
 
 def _get_player_to_verifies_map(shares_map, keys_for_players, vectors_from_players, max_secret_length):
@@ -287,19 +298,12 @@ def reconstruct_secret(num_players, reconstruction_threshold, max_secret_length,
     if (len(robust_shares_map) < reconstruction_threshold):
         raise FatalReconstructionFailure
 
-    shares_map = _map_player_to_attribute(robust_shares_map, "share", invalid_players)
-    keys_for_players = _map_player_to_attribute(robust_shares_map, "keys", invalid_players)
-    vectors_from_players = _map_player_to_attribute(robust_shares_map, "vectors", invalid_players)
+    shares_map, keys_for_players, vectors_from_players = _map_player_to_attributes(robust_shares_map, invalid_players)
+    players = shares_map.keys()
+    _validate_attributes(players, shares_map, keys_for_players, vectors_from_players, invalid_players)
 
-    _validate_shares(shares_map, invalid_players)
-    _validate_keys(keys_for_players, invalid_players)
-    _validate_vectors(vectors_from_players, invalid_players)
-
-    # now that the set of invalid_players has been finalized,
-    #   remove these players from the working dictionaries
-    _clean_map(shares_map, invalid_players)
-    _clean_map(keys_for_players, invalid_players)
-    _clean_map(vectors_from_players, invalid_players)
+    # now that the set of invalid_players has been finalized, remove these players from the working dictionaries
+    _clean_map(players, shares_map, keys_for_players, vectors_from_players, invalid_players)
 
     verifies_map = _get_player_to_verifies_map(shares_map, keys_for_players, vectors_from_players, max_secret_length)
     secret_map = _get_player_to_secret_map(verifies_map, shares_map, num_players, reconstruction_threshold, max_secret_length)
