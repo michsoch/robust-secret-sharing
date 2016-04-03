@@ -69,7 +69,7 @@ def combine_testing_dictionaries(dictionary, subset):
 def share_and_recover(players, reconstruction_threshold, secret, end):
     '''
     Args:
-        players, a list of unique ids of length num_players
+        players, a list of unique player ids
         reconstruction_threshold, the threshold needed for secret reconstruction
         secret, the secret to be shared
         end, the number of shares to use in reconstruction

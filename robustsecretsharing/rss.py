@@ -26,9 +26,9 @@ def _serialize_robust_share(share, keys, vectors):
 def _deserialize_robust_share(json_dump):
     '''
     Args:
-        json_dump, a JSON string created by jsonify_robust_share
+        json_dump, a JSON string created by _serialize_robust_share
     Returns:
-        a dictionary of the arguments passed to jsonify_robust_share
+        a dictionary of the arguments passed to _serialize_robust_share
         with keys (share, keys, vectors)
     Raises:
         ValueError
@@ -45,7 +45,7 @@ def _make_robust_shares(shares_map, batch_keys, batch_vectors):
         batch_vectors, a dictionary of player ids to
             dictionaries of player ids to associated tuple vectors
     Returns:
-        a dictionary of player ids to robust shares that are json strings containing
+        a dictionary of player ids to serialized robust shares containing
             a share
             a map of player ids to keys for the shares held by those players
             a map of player ids to vectors for this share
@@ -61,7 +61,7 @@ def _make_robust_shares(shares_map, batch_keys, batch_vectors):
 def share_secret(players, reconstruction_threshold, max_secret_length, secret):
     '''
     Args:
-        players, a list of unique string ids for all players so that the length of this list is num_players
+        players, a list of unique string ids for all players
         reconstruction_threshold, the number of shares needed for reconstruction
             any collection of fewer shares will reveal no information about the secret
         max_secret_length, the maximum length of the secret represented as a bytestring (ie, len(secret))
@@ -214,6 +214,7 @@ def _get_player_to_verifies_map(shares_map, keys_for_players, vectors_from_playe
         for player, share in shares_map.items():
             if authentication.validate(keys_for_players[verifier][player], vectors_from_players[player][verifier], share, max_secret_length + 1):
                 verifies[verifier].append(player)
+    # return a dictionary that can be inverted - the value is a tuple (hashable) and sorted (in preparation for equality checks)
     return {verifier: tuple(sorted(players)) for verifier, players in verifies.items()}
 
 
@@ -231,7 +232,7 @@ def _get_player_to_secret_map(verifies_map, shares_map, num_players, reconstruct
     '''
     secret_map = {}
     for verifier, players in verifies_map.items():
-        if (len(players) >= reconstruction_threshold):
+        if len(players) >= reconstruction_threshold:
             tuple_shares = [pairing.elegant_unpair(share) for share in [shares_map[player] for player in players]]
             try:
                 secret = serialization.convert_int_to_bytestring(sss._reconstruct_secret_int(num_players, max_secret_length + 1, tuple_shares))
@@ -274,7 +275,7 @@ def _vote(voting_blocks, reconstruction_threshold):
 def reconstruct_secret(num_players, reconstruction_threshold, max_secret_length, json_map):
     '''
     Args:
-        num_players, the total number of players (can be greater than or equal to the number of shares)
+        num_players, the length of the list of players passed to share_secret
         reconstruction_threshold, the number of shares needed for reconstruction
         max_secret_length, the maximum length of the secret represented as a bytestring (ie, len(secret))
         json_map, a map of valid player string ids to JSON strings dispersed from share_secret
@@ -295,7 +296,7 @@ def reconstruct_secret(num_players, reconstruction_threshold, max_secret_length,
         except ValueError:
             invalid_players.add(player)
 
-    if (len(robust_shares_map) < reconstruction_threshold):
+    if len(robust_shares_map) < reconstruction_threshold:
         raise FatalReconstructionFailure
 
     shares_map, keys_for_players, vectors_from_players = _map_player_to_attributes(robust_shares_map, invalid_players)
