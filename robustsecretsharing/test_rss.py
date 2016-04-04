@@ -24,7 +24,7 @@ def get_ids(num_players):
 def get_shares_subset(players, reconstruction_threshold, secret, end):
     '''
     Args:
-        players, a list of random, unique ids of length num_players
+        players, a list of random, unique ids
         reconstruction_threshold, the threshold used for sharing
         secret, the value to be secret shared
         end, marks the number of shares to return
@@ -345,6 +345,13 @@ def test_honest_less_dishonest_greater_corrupt_share_failure():
 
 
 def test_honest_less_dishonest_greater_corrupt_some_vectors_failure():
+    '''
+    For some number of corrupt players (num_corrupt), corrupt a number of vectors held by those players (degree_of_corruption).
+    This will cause all corrupt players to fail authentication by the players who hold keys associated with those corrupted vectors.
+
+    Since there are greater than reconstruction_threshold - 1 such dishonest players
+    and fewer than reconstruction honest players in this case, failure occurs.
+    '''
     num_players = 20
     reconstruction_threshold = 10
     num_corrupt = reconstruction_threshold
@@ -359,6 +366,13 @@ def test_honest_less_dishonest_greater_corrupt_some_vectors_failure():
 
 
 def test_honest_less_dishonest_greater_corrupt_some_keys_failure():
+    '''
+    For some number of corrupt players (num_corrupt), corrupt a number of keys held by those players (degree_of_corruption).
+    This will cause all corrupt players to claim that the players associated with those keys lied about their share.
+
+    Since there are greater than reconstruction_threshold - 1 such dishonest players
+    and fewer than reconstruction honest players in this case, failure occurs.
+    '''
     num_players = 20
     reconstruction_threshold = 10
     num_corrupt = reconstruction_threshold
@@ -386,6 +400,12 @@ def test_honest_less_dishonest_equal_corrupt_share_failure():
 
 
 def test_honest_less_dishonest_equal_corrupt_some_vectors_failure():
+    '''
+    For some number of corrupt players (num_corrupt), corrupt a number of vectors held by those players (degree_of_corruption).
+    This will cause all corrupt players to fail authentication by the players who hold keys associated with those corrupted vectors.
+
+    Since there are fewer than reconstruction honest players in this case, failure occurs.
+    '''
     num_players = 20
     reconstruction_threshold = 7
     num_corrupt = reconstruction_threshold - 1
@@ -400,6 +420,12 @@ def test_honest_less_dishonest_equal_corrupt_some_vectors_failure():
 
 
 def test_honest_less_dishonest_less_corrupt_some_keys_failure():
+    '''
+    For some number of corrupt players (num_corrupt), corrupt a number of keys held by those players (degree_of_corruption).
+    This will cause all corrupt players to claim that the players associated with those keys lied about their share.
+
+    Since there are fewer than reconstruction honest players in this case, failure occurs.
+    '''
     num_players = 20
     reconstruction_threshold = 7
     num_corrupt = 4
@@ -458,6 +484,14 @@ def test_honest_greater_dishonest_less_corrupt_share():
 
 
 def test_greater_honest_less_dishonest_corrupt_half_vectors():
+    '''
+    For some number of corrupt players (num_corrupt), corrupt a number of vectors held by those players (degree_of_corruption).
+    This will cause all corrupt players to fail authentication by the players who hold keys associated with those corrupted vectors.
+
+    In this case, 1 corrupt player attempts to cause problems by forcing honest players to disagree about the shares they authenticate.
+    However, because there are fewer than reconstruction - 1 dishonest players and there are reconstruction_threshold honest players,
+    the original secret can be recovered.
+    '''
     reconstruction_threshold = 7
     num_corrupt = 1
     num_players = reconstruction_threshold + num_corrupt
@@ -475,6 +509,13 @@ def test_greater_honest_less_dishonest_corrupt_half_vectors():
 
 
 def test_greater_honest_equal_dishonest_corrupt_all_vectors():
+    '''
+    For some number of corrupt players (num_corrupt), corrupt a number of vectors held by those players (degree_of_corruption).
+    This will cause all corrupt players to fail authentication by the players who hold keys associated with those corrupted vectors.
+
+    Bceause there are only reconstruction - 1 dishonest players and there are reconstruction_threshold honest players,
+    the original secret can be recovered.
+    '''
     reconstruction_threshold = 7
     num_corrupt = reconstruction_threshold - 1
     num_players = reconstruction_threshold + num_corrupt
@@ -492,6 +533,13 @@ def test_greater_honest_equal_dishonest_corrupt_all_vectors():
 
 
 def test_greater_honest_equal_dishonest_corrupt_many_vectors():
+    '''
+    For some number of corrupt players (num_corrupt), corrupt a number of vectors held by those players (degree_of_corruption).
+    This will cause all corrupt players to fail authentication by the players who hold keys associated with those corrupted vectors.
+
+    Bceause there are only reconstruction - 1 dishonest players and there are reconstruction_threshold honest players,
+    the original secret can be recovered.
+    '''
     reconstruction_threshold = 7
     num_corrupt = reconstruction_threshold - 1
     num_players = reconstruction_threshold + num_corrupt
@@ -509,6 +557,13 @@ def test_greater_honest_equal_dishonest_corrupt_many_vectors():
 
 
 def test_greater_honest_equal_dishonest_corrupt_few_vectors():
+    '''
+    For some number of corrupt players (num_corrupt), corrupt a number of vectors held by those players (degree_of_corruption).
+    This will cause all corrupt players to fail authentication by the players who hold keys associated with those corrupted vectors.
+
+    Bceause there are only reconstruction - 1 dishonest players and there are reconstruction_threshold honest players,
+    the original secret can be recovered.
+    '''
     reconstruction_threshold = 7
     num_corrupt = reconstruction_threshold - 1
     num_players = reconstruction_threshold + num_corrupt
@@ -543,6 +598,13 @@ def test_greater_honest_equal_dishonest_corrupt_no_vectors():
 
 
 def test_greater_honest_equal_dishonest_corrupt_all_keys():
+    '''
+    For some number of corrupt players (num_corrupt), corrupt a number of keys held by those players (degree_of_corruption).
+    This will cause all corrupt players to claim that the players associated with those keys lied about their share.
+
+    Bceause there are only reconstruction - 1 dishonest players and there are reconstruction_threshold honest players,
+    the original secret can be recovered.
+    '''
     reconstruction_threshold = 7
     num_corrupt = reconstruction_threshold - 1
     num_players = reconstruction_threshold + num_corrupt
@@ -560,6 +622,13 @@ def test_greater_honest_equal_dishonest_corrupt_all_keys():
 
 
 def test_greater_honest_equal_dishonest_corrupt_many_keys():
+    '''
+    For some number of corrupt players (num_corrupt), corrupt a number of keys held by those players (degree_of_corruption).
+    This will cause all corrupt players to claim that the players associated with those keys lied about their share.
+
+    Bceause there are only reconstruction - 1 dishonest players and there are reconstruction_threshold honest players,
+    the original secret can be recovered.
+    '''
     reconstruction_threshold = 7
     num_corrupt = reconstruction_threshold - 1
     num_players = reconstruction_threshold + num_corrupt
@@ -577,6 +646,13 @@ def test_greater_honest_equal_dishonest_corrupt_many_keys():
 
 
 def test_greater_honest_equal_dishonest_corrupt_few_keys():
+    '''
+    For some number of corrupt players (num_corrupt), corrupt a number of keys held by those players (degree_of_corruption).
+    This will cause all corrupt players to claim that the players associated with those keys lied about their share.
+
+    Bceause there are only reconstruction - 1 dishonest players and there are reconstruction_threshold honest players,
+    the original secret can be recovered.
+    '''
     reconstruction_threshold = 7
     num_corrupt = reconstruction_threshold - 1
     num_players = reconstruction_threshold + num_corrupt
@@ -809,7 +885,7 @@ def test_json_parse_make_some_vectors_string():
                           invalid_players, shares_subset.keys()[:num_broken]) is True
 
 
-def test_json_parse_make_key_string():
+def test_json_parse_make_key_dict_string():
     num_players = 8
     reconstruction_threshold = 4
     end = num_players

@@ -73,7 +73,7 @@ def share_secret(players, reconstruction_threshold, max_secret_length, secret):
             a map of player ids to vectors for this share
                 that can be verified by keys held by those players
     Raises:
-        ValueError, the input parameters fail validation
+        ValueError, the input parameters fail validation (see share_secret of sss.py)
     '''
     num_players = len(players)
     secret_int = serialization.convert_bytestring_to_int(secret)
@@ -189,7 +189,7 @@ def _clean_map(players, shares_map, keys_for_players, vectors_from_players, inva
         shares_map, a map of string player ids to integer shares
         keys_for_players, a map of string players ids to keys associated with others players' shares
         vectors_from_players, a map of string players ids to vectors associated with those players shares
-        invalid_players, the set thus far of players whose shares cause structural errors
+        invalid_players, the finalized set of players whose shares cause structural errors
     Removes all invalid_players from the keys of the three given mappings
     '''
     for player in players:
@@ -295,9 +295,6 @@ def reconstruct_secret(num_players, reconstruction_threshold, max_secret_length,
             robust_shares_map[player] = _deserialize_robust_share(robust_share)
         except ValueError:
             invalid_players.add(player)
-
-    if len(robust_shares_map) < reconstruction_threshold:
-        raise FatalReconstructionFailure
 
     shares_map, keys_for_players, vectors_from_players = _map_player_to_attributes(robust_shares_map, invalid_players)
     players = shares_map.keys()
