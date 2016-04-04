@@ -27,7 +27,7 @@ def _share_secret_int(num_players, reconstruction_threshold, max_secret_length, 
     Returns:
         a list of tuples of (x, f(x)) values
     Raises:
-        ValueError, the input arguments fail validation
+        ValueError, the input parameters are invalid
     '''
     bitlength = max(num_players.bit_length(), max_secret_length * 8)
     prime = primes.get_prime_by_bitlength(bitlength)
