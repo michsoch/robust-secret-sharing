@@ -29,16 +29,16 @@ def test_max_shares():
     assert recovered_secret == secret
 
 
-def test_secret_with_leading_zeroes():
+def test_secret_leading_zeroes():
     num_players = 5
     reconstruction_threshold = 2
     end = 2
 
     # Create secret
-    trailing_zero_secret = '\x00\x00e\x9c\x9e\x16\xe9\xea\x15+\xbf]\xebx;o\xef\xc9X1c\xaepj\xebj\x12\xe3r\xcd\xeaM'
+    leading_zero_secret = '\x00\x00e\x9c\x9e\x16\xe9\xea\x15+\xbf]\xebx;o\xef\xc9X1c\xaepj\xebj\x12\xe3r\xcd\xeaM'
 
-    recovered_secret = share_and_recover(num_players, reconstruction_threshold, trailing_zero_secret, end)
-    assert recovered_secret == trailing_zero_secret
+    recovered_secret = share_and_recover(num_players, reconstruction_threshold, leading_zero_secret, end)
+    assert recovered_secret == leading_zero_secret
 
 
 def test_many_players():
@@ -127,10 +127,8 @@ def test_bad_configuration_prime_small_secret():
 
 
 def test_bad_configuration_prime_none():
-    num_players = 2
-    reconstruction_threshold = 5
-
-    max_secret_length = len(secret)
+    num_players = 40
+    reconstruction_threshold = 30
 
     with pytest.raises(ValueError):
-        sss.share_secret(num_players, reconstruction_threshold, max_secret_length, secret)
+        sss.share_secret(num_players, reconstruction_threshold, 5000, secret)

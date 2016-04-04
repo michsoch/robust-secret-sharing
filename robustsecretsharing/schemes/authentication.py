@@ -56,17 +56,3 @@ def generate_batch(num_macs, message, max_length):
             such that each keys[i], vectors[i] pair authenticate the given message
     '''
     return zip(*[generate_check_vector(message, max_length) for _ in xrange(num_macs)])
-
-
-def validate_batch(keys, vectors, message, max_length):
-    '''
-    Args:
-        keys, a list of integer values
-        vectors, a list of tuple values
-        message, the message to verify for each keys[i], vectors[i] pair
-        max_length, value greater than or equal to len(str(message))
-    Returns:
-        validated, a list of True or False values in parallel with keys and vectors
-            such that validated[i] indicates if the keys[i], vectors[i] pair validated the message
-    '''
-    return [validate(key, vector, message, max_length) for (key, vector) in zip(keys, vectors)]

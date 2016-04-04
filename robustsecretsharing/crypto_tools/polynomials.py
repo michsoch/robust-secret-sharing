@@ -63,8 +63,8 @@ def evaluate(coefficients, xlist, prime):
 def interpolate(points, prime):
     '''
     Args:
-        points: list of size t + 1 of tuples, (x, f(x)) where both values are integers
-                the algorithm assumes that exactly t + 1 points are provided
+        points: list of tuples, (x, f(x)), where both values are integers
+                the number of points given is assumed to be the degree of the polynomial
         prime: arithmetic is done mod this prime
     Returns:
         P: a function that takes a value x and returns the evaluation of the polynomial at that point

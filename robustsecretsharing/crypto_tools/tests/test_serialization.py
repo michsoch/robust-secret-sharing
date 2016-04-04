@@ -8,7 +8,7 @@ def test_encode_decode_small():
     assert serialization.convert_int_to_bytestring(int_result) == bytestring
 
 
-def test_pack_unpack_large():
+def test_encode_decode_large():
     bytestring = ('123456789012345678901234567890123456789012345678901234567890'
                   '123456789012345678901234567890123456789012345678901234567890'
                   '123456789012345678901234567890123456789012345678901234567890'
