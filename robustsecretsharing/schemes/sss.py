@@ -70,7 +70,8 @@ def _reconstruct_secret_int(num_players, max_secret_length, shares):
         max_secret_length, the maximum length of the secret represented as a bytestring (ie, len(secret))
         shares, a list of tuples representing (x, f(x)) values
     Returns:
-        the integer that was shared by _share_secret_int
+        if all shares are valid, the integer that was shared by _share_secret_int
+        otherwise, no guarantees are made about the value of the integer returned
     '''
     bitlength = max(num_players.bit_length(), max_secret_length * 8)
     prime = primes.get_prime_by_bitlength(bitlength)
@@ -84,9 +85,8 @@ def reconstruct_secret(num_players, max_secret_length, shares):
         max_secret_length, the maximum length of the secret represented as a bytestring (ie, len(secret))
         shares, a list of strings - each representing an integer value
     Returns:
-        if all given shares are valid, the bytestring that was shared by share_secret
-    Raises:
-        ValueError, a share was corrupted and attempted reconstruction failed
+        if all shares are valid, the original secret as passed to share_authenticated_secret
+        otherwise, no guarantees are made about the value of the bytestring returned
     '''
     points = [pairing.elegant_unpair(int(share)) for share in shares]
     secret_int = _reconstruct_secret_int(num_players, max_secret_length + 1, points)

@@ -17,23 +17,23 @@ def _serialize_robust_share(share, keys, vectors):
         keys, a dictionary of string player ids to integer keys
         vectors, a dictionary of string player ids to tuples of ints representing authentication vectors
     Returns:
-        a JSON string that encodes the arguments in a dictionary
+        a serialized robust share string that encodes the arguments in a dictionary
         with keys: share, keys, and vectors
     '''
     return json.dumps({'share': share, 'keys': keys, 'vectors': vectors})
 
 
-def _deserialize_robust_share(json_dump):
+def _deserialize_robust_share(serialized_dump):
     '''
     Args:
-        json_dump, a JSON string created by _serialize_robust_share
+        serialized_dump, a string created by _serialize_robust_share
     Returns:
         a dictionary of the arguments passed to _serialize_robust_share
         with keys (share, keys, vectors)
     Raises:
         ValueError
     '''
-    return json.loads(json_dump)
+    return json.loads(serialized_dump)
 
 
 def _make_robust_shares(shares_map, batch_keys, batch_vectors):
@@ -226,15 +226,10 @@ def _get_bytestring_secret(shares, num_players, max_secret_length):
         max_secret_length, the max length of the share if it were represented as a bytestring
     Returns:
         if all shares are valid, the original secret as passed to share_authenticated_secret
-        otherwise, None or else a secret different from that passed to share_authenticated_secret
+        otherwise, no guarantees are made about the value of the bytestring returned
     '''
     tuple_shares = [pairing.elegant_unpair(share) for share in shares]
-    try:
-        secret = serialization.convert_int_to_bytestring(sss._reconstruct_secret_int(num_players, max_secret_length + 1, tuple_shares))
-    except ValueError:
-        return None
-    else:
-        return secret
+    return serialization.convert_int_to_bytestring(sss._reconstruct_secret_int(num_players, max_secret_length + 1, tuple_shares))
 
 
 def _get_player_to_secret_map(verifies_map, shares_map, num_players, reconstruction_threshold, max_secret_length):
@@ -252,9 +247,7 @@ def _get_player_to_secret_map(verifies_map, shares_map, num_players, reconstruct
     secret_map = {}
     for verifier, players in verifies_map.items():
         if len(players) >= reconstruction_threshold:
-            secret = _get_bytestring_secret([shares_map[player] for player in players], num_players, max_secret_length)
-            if secret is not None:
-                secret_map[verifier] = secret
+            secret_map[verifier] = _get_bytestring_secret([shares_map[player] for player in players], num_players, max_secret_length)
     return secret_map
 
 
@@ -287,13 +280,13 @@ def _vote(voting_blocks, reconstruction_threshold):
     return authorized
 
 
-def reconstruct_authenticated_secret(num_players, reconstruction_threshold, max_secret_length, json_map):
+def reconstruct_authenticated_secret(num_players, reconstruction_threshold, max_secret_length, serialized_map):
     '''
     Args:
         num_players, the length of the list of players passed to share_authenticated_secret
         reconstruction_threshold, the number of shares needed for reconstruction
         max_secret_length, the maximum length of the secret represented as a bytestring (ie, len(secret))
-        json_map, a map of valid player string ids to JSON strings dispersed from share_authenticated_secret
+        serialized_map, a map of valid player string ids to serialized robust share strings dispersed from share_authenticated_secret
     Returns:
         if the number of dishonest players was less than reconstruction_threshold,
         a successful return contains a tuple of
@@ -305,7 +298,7 @@ def reconstruct_authenticated_secret(num_players, reconstruction_threshold, max_
     '''
     invalid_players = set()
     robust_shares_map = {}
-    for player, robust_share in json_map.items():
+    for player, robust_share in serialized_map.items():
         try:
             robust_shares_map[player] = _deserialize_robust_share(robust_share)
         except ValueError:
@@ -332,18 +325,18 @@ def reconstruct_authenticated_secret(num_players, reconstruction_threshold, max_
     return secret, list(verified_players), list(invalid_players)
 
 
-def reconstruct_secret(num_players, max_secret_length, json_map):
+def reconstruct_unauthenticated_secret(num_players, max_secret_length, serialized_map):
     '''
     Args:
         num_players, the length of the list of players passed to share_authenticated_secret
         max_secret_length, the maximum length of the secret represented as a bytestring (ie, len(secret))
-        json_map, a map of valid player string ids to JSON strings dispersed from share_authenticated_secret
+        serialized_map, a map of valid player string ids to serialized robust shares dispersed from share_authenticated_secret
     Returns:
         if all shares are valid, the original bytestring that was shared by share_authenticated_secret
-        otherwise, None or a bytestring that differs from that passed to share_authenticated_secret
+        otherwise, no gaurentees are a
     '''
     shares = []
-    for player, robust_share in json_map.items():
+    for player, robust_share in serialized_map.items():
         try:
             share = _deserialize_robust_share(robust_share)["share"]
             _assert_valid_share(share)

@@ -1,6 +1,5 @@
 from robustsecretsharing import rss
 from robustsecretsharing import test_authenticated_rss
-import pytest
 
 secret = 'x\x02e\x9c\x9e\x16\xe9\xea\x15+\xbf]\xebx;o\xef\xc9X1c\xaepj\xebj\x12\xe3r\xcd\xeaM'  # An example key
 alt_secret = 'c4bbcb1fbec99d65bf59d85c8cb62ee2db963f0fe106f483d9afa73bd4e39a8a'
@@ -12,7 +11,7 @@ def share_and_recover(num_players, reconstruction_threshold, secret, end):
     robust_shares = rss.share_authenticated_secret(players, reconstruction_threshold, max_secret_length, secret)
 
     shares = {player: share for (player, share) in robust_shares.items()[:end]}
-    return rss.reconstruct_secret(num_players, max_secret_length, shares)
+    return rss.reconstruct_unauthenticated_secret(num_players, max_secret_length, shares)
 
 
 def corrupt_and_recover(robust_shares, num_players, end, num_corrupt):
@@ -26,7 +25,7 @@ def corrupt_and_recover(robust_shares, num_players, end, num_corrupt):
         share_dict["share"] /= 4
 
     shares = test_authenticated_rss.combine_testing_dictionaries(shares_subset, test_authenticated_rss.jsonify_dict(corrupters))
-    return rss.reconstruct_secret(num_players, max_secret_length, shares)
+    return rss.reconstruct_unauthenticated_secret(num_players, max_secret_length, shares)
 
 
 def test_min_shares():

@@ -11,7 +11,7 @@ def share_and_recover(num_players, reconstruction_threshold, secret, end):
     return sss.reconstruct_secret(num_players, max_secret_length, shares[:end])
 
 
-def share_break_and_recover(num_players, reconstruction_threshold, secret, end, num_broken):
+def share_and_break(num_players, reconstruction_threshold, secret, end, num_broken):
     max_secret_length = len(secret)
     shares = sss.share_secret(num_players, reconstruction_threshold, max_secret_length, secret)
 
@@ -21,6 +21,7 @@ def share_break_and_recover(num_players, reconstruction_threshold, secret, end, 
             broken_shares.append('2' + share[1:])
         else:
             broken_shares.append('1' + share[1:])
+
     return sss.reconstruct_secret(num_players, max_secret_length, broken_shares + shares[:num_broken])
 
 
@@ -118,13 +119,19 @@ def test_int_players():
     assert recovered_secret == secret
 
 
+def test_too_few_shares():
+    num_players = 9
+    reconstruction_threshold = 5
+
+    share_and_recover(num_players, reconstruction_threshold, secret, reconstruction_threshold - 1)
+
+
 def test_max_shares_some_bad():
     num_players = 9
     reconstruction_threshold = 5
     num_bad = 2
 
-    with pytest.raises(ValueError):
-        share_break_and_recover(num_players, reconstruction_threshold, secret, num_players, num_bad)
+    share_and_break(num_players, reconstruction_threshold, secret, num_players, num_bad)
 
 
 def test_min_shares_some_bad():
@@ -132,8 +139,7 @@ def test_min_shares_some_bad():
     reconstruction_threshold = 5
     num_bad = 2
 
-    with pytest.raises(ValueError):
-        share_break_and_recover(num_players, reconstruction_threshold, secret, reconstruction_threshold, num_bad)
+    share_and_break(num_players, reconstruction_threshold, secret, reconstruction_threshold, num_bad)
 
 
 def test_bad_configuration_threshold():
