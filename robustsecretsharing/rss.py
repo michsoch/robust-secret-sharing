@@ -225,7 +225,7 @@ def _get_bytestring_secret(shares, num_players, max_secret_length):
         num_players, the number of total players
         max_secret_length, the max length of the share if it were represented as a bytestring
     Returns:
-        if all shares are valid, the original secret as passed to share_authenticated_secret
+        the original secret as passed to share_authenticated_secret if all shares are valid
         otherwise, no guarantees are made about the value of the bytestring returned
     '''
     tuple_shares = [pairing.elegant_unpair(share) for share in shares]
@@ -332,8 +332,8 @@ def reconstruct_unauthenticated_secret(num_players, max_secret_length, serialize
         max_secret_length, the maximum length of the secret represented as a bytestring (ie, len(secret))
         serialized_map, a map of valid player string ids to serialized robust shares dispersed from share_authenticated_secret
     Returns:
-        if all shares are valid, the original bytestring that was shared by share_authenticated_secret
-        otherwise, no gaurentees are a
+        the original bytestring that was shared by share_authenticated_secret if all shares were valid
+        otherwise, no guarantees are made about the value of the bytestring returned
     '''
     shares = []
     for player, robust_share in serialized_map.items():
