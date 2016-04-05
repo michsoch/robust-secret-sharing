@@ -86,6 +86,8 @@ def reconstruct_secret(num_players, max_secret_length, shares):
         shares, a list of strings - each representing an integer value
     Returns:
         the bytestring that was shared by share_secret
+    Raises:
+        ValueError, a share was corrupted and attempted reconstruction failed
     '''
     points = [pairing.elegant_unpair(int(share)) for share in shares]
     secret_int = _reconstruct_secret_int(num_players, max_secret_length + 1, points)
