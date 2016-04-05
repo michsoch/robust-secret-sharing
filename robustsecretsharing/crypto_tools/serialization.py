@@ -42,15 +42,10 @@ def _convert_hex_to_bytestring(hex_string):
     Args:
         hex_string, the hex_string returned from _convert_bytestring_to_hex
     Returns:
-        the bytestring passed to _convert_bytestring_to_hex
-    Raises:
-        ValueError, cannot parse because bytestring is missing prepend value
+        if nothing was tampered with, the bytestring passed to _convert_bytestring_to_hex
+        otherwise no guarantees made about the value
     '''
-    byte_string = codecs.decode(hex_string, 'hex')
-    if byte_string.startswith(MAGIC):
-        return codecs.decode(hex_string, 'hex')[len(MAGIC):]
-    else:
-        raise ValueError("cannot parse bytestring")
+    return codecs.decode(hex_string, 'hex')[len(MAGIC):]
 
 
 def convert_bytestring_to_int(byte_string):

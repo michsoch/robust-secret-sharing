@@ -32,7 +32,7 @@ def get_shares_subset(players, reconstruction_threshold, secret, end):
         a dictionary of length end that maps ids to json_string shares
     '''
     max_secret_length = len(secret)
-    shares_map = rss.share_secret(players, reconstruction_threshold, max_secret_length, secret)
+    shares_map = rss.share_authenticated_secret(players, reconstruction_threshold, max_secret_length, secret)
     return {player: shares_map[player] for player in shares_map.keys()[:end]}
 
 
@@ -78,7 +78,7 @@ def share_and_recover(players, reconstruction_threshold, secret, end):
     '''
     max_secret_length = len(secret)
     shares_subset = get_shares_subset(players, reconstruction_threshold, secret, end)
-    return rss.reconstruct_secret(len(players), reconstruction_threshold, max_secret_length, shares_subset)
+    return rss.reconstruct_authenticated_secret(len(players), reconstruction_threshold, max_secret_length, shares_subset)
 
 
 def corrupt_share_and_recover(num_players, reconstruction_threshold, max_secret_length, shares_subset, num_corrupt):
@@ -99,7 +99,7 @@ def corrupt_share_and_recover(num_players, reconstruction_threshold, max_secret_
         share_dict["share"] /= 4
 
     shares = combine_testing_dictionaries(shares_subset, jsonify_dict(corrupters))
-    return rss.reconstruct_secret(num_players, reconstruction_threshold, max_secret_length, shares)
+    return rss.reconstruct_authenticated_secret(num_players, reconstruction_threshold, max_secret_length, shares)
 
 
 def corrupt_vectors_and_recover(num_players, reconstruction_threshold, max_secret_length, shares_subset, num_corrupt, degree_of_corruption):
@@ -124,7 +124,7 @@ def corrupt_vectors_and_recover(num_players, reconstruction_threshold, max_secre
             share_dict["vectors"][verifier][1] /= 4
 
     shares = combine_testing_dictionaries(shares_subset, jsonify_dict(corrupters))
-    return rss.reconstruct_secret(num_players, reconstruction_threshold, max_secret_length, shares)
+    return rss.reconstruct_authenticated_secret(num_players, reconstruction_threshold, max_secret_length, shares)
 
 
 def corrupt_keys_and_recover(num_players, reconstruction_threshold, max_secret_length, shares_subset, num_corrupt, degree_of_corruption):
@@ -148,7 +148,7 @@ def corrupt_keys_and_recover(num_players, reconstruction_threshold, max_secret_l
             share_dict["keys"][verifier] /= 4
 
     shares = combine_testing_dictionaries(shares_subset, jsonify_dict(corrupters))
-    return rss.reconstruct_secret(num_players, reconstruction_threshold, max_secret_length, shares)
+    return rss.reconstruct_authenticated_secret(num_players, reconstruction_threshold, max_secret_length, shares)
 
 
 def collude_and_recover(num_players, reconstruction_threshold, max_secret_length, shares_subset, num_collude):
@@ -180,7 +180,7 @@ def collude_and_recover(num_players, reconstruction_threshold, max_secret_length
                                            player_dict["share"], max_secret_length) is True
 
     shares = combine_testing_dictionaries(shares_subset, jsonify_dict(colluders))
-    return rss.reconstruct_secret(num_players, reconstruction_threshold, max_secret_length, shares)
+    return rss.reconstruct_authenticated_secret(num_players, reconstruction_threshold, max_secret_length, shares)
 
 
 def verify_results(recovered_secret, original_secret, valid_players, honest_players, invalid_players, dishonest_players):
@@ -305,7 +305,7 @@ def test_robust_bad_configuration_threshold():
     max_secret_length = len(secret)
 
     with pytest.raises(ValueError):
-        rss.share_secret(players, reconstruction_threshold, max_secret_length, secret)
+        rss.share_authenticated_secret(players, reconstruction_threshold, max_secret_length, secret)
 
 
 def test_robust_bad_configuration_prime_small_secret():
@@ -318,7 +318,7 @@ def test_robust_bad_configuration_prime_small_secret():
     max_secret_length = len(bad_secret) - 1
 
     with pytest.raises(ValueError):
-        rss.share_secret(players, reconstruction_threshold, max_secret_length, bad_secret)
+        rss.share_authenticated_secret(players, reconstruction_threshold, max_secret_length, bad_secret)
 
 
 def test_robust_bad_configuration_prime_none():
@@ -328,7 +328,7 @@ def test_robust_bad_configuration_prime_none():
     players = get_ids(num_players)
 
     with pytest.raises(ValueError):
-        rss.share_secret(players, reconstruction_threshold, 5000, secret)
+        rss.share_authenticated_secret(players, reconstruction_threshold, 5000, secret)
 
 
 def test_honest_less_dishonest_greater_corrupt_share_failure():
@@ -719,7 +719,7 @@ def test_json_bracket_parse_error():
     shares = combine_testing_dictionaries(shares_subset, broken_shares)
 
     recovered_secret, authorized_players, invalid_players = \
-        rss.reconstruct_secret(num_players, reconstruction_threshold, len(secret), shares)
+        rss.reconstruct_authenticated_secret(num_players, reconstruction_threshold, len(secret), shares)
     assert verify_results(recovered_secret, secret,
                           authorized_players, shares_subset.keys()[num_broken:],
                           invalid_players, shares_subset.keys()[:num_broken]) is True
@@ -742,7 +742,7 @@ def test_json_list_parse_error():
     shares = combine_testing_dictionaries(shares_subset, broken_shares)
 
     recovered_secret, authorized_players, invalid_players = \
-        rss.reconstruct_secret(num_players, reconstruction_threshold, len(secret), shares)
+        rss.reconstruct_authenticated_secret(num_players, reconstruction_threshold, len(secret), shares)
     assert verify_results(recovered_secret, secret,
                           authorized_players, shares_subset.keys()[num_broken:],
                           invalid_players, shares_subset.keys()[:num_broken]) is True
@@ -766,7 +766,7 @@ def test_json_key_error():
     shares = combine_testing_dictionaries(shares_subset, broken_shares)
 
     recovered_secret, authorized_players, invalid_players = \
-        rss.reconstruct_secret(num_players, reconstruction_threshold, len(secret), shares)
+        rss.reconstruct_authenticated_secret(num_players, reconstruction_threshold, len(secret), shares)
     assert verify_results(recovered_secret, secret,
                           authorized_players, shares_subset.keys()[num_broken:],
                           invalid_players, shares_subset.keys()[:num_broken]) is True
@@ -788,7 +788,7 @@ def test_json_parse_make_share_string():
     shares = combine_testing_dictionaries(shares_subset, jsonify_dict(unjsonify_shares))
 
     recovered_secret, authorized_players, invalid_players = \
-        rss.reconstruct_secret(num_players, reconstruction_threshold, len(secret), shares)
+        rss.reconstruct_authenticated_secret(num_players, reconstruction_threshold, len(secret), shares)
     assert verify_results(recovered_secret, secret,
                           authorized_players, shares_subset.keys()[num_broken:],
                           invalid_players, shares_subset.keys()[:num_broken]) is True
@@ -811,7 +811,7 @@ def test_json_parse_remove_vectors():
     shares = combine_testing_dictionaries(shares_subset, jsonify_dict(unjsonify_shares))
 
     recovered_secret, authorized_players, invalid_players = \
-        rss.reconstruct_secret(num_players, reconstruction_threshold, len(secret), shares)
+        rss.reconstruct_authenticated_secret(num_players, reconstruction_threshold, len(secret), shares)
     assert verify_results(recovered_secret, secret,
                           authorized_players, shares_subset.keys()[num_broken:],
                           invalid_players, shares_subset.keys()[:num_broken]) is True
@@ -834,7 +834,7 @@ def test_json_parse_remove_keys():
     shares = combine_testing_dictionaries(shares_subset, jsonify_dict(unjsonify_shares))
 
     recovered_secret, authorized_players, invalid_players = \
-        rss.reconstruct_secret(num_players, reconstruction_threshold, len(secret), shares)
+        rss.reconstruct_authenticated_secret(num_players, reconstruction_threshold, len(secret), shares)
     assert verify_results(recovered_secret, secret,
                           authorized_players, shares_subset.keys()[num_broken:],
                           invalid_players, shares_subset.keys()[:num_broken]) is True
@@ -856,7 +856,7 @@ def test_json_parse_make_vector_dict_string():
     shares = combine_testing_dictionaries(shares_subset, jsonify_dict(unjsonify_shares))
 
     recovered_secret, authorized_players, invalid_players = \
-        rss.reconstruct_secret(num_players, reconstruction_threshold, len(secret), shares)
+        rss.reconstruct_authenticated_secret(num_players, reconstruction_threshold, len(secret), shares)
     assert verify_results(recovered_secret, secret,
                           authorized_players, shares_subset.keys()[num_broken:],
                           invalid_players, shares_subset.keys()[:num_broken]) is True
@@ -879,7 +879,7 @@ def test_json_parse_make_some_vectors_string():
     shares = combine_testing_dictionaries(shares_subset, jsonify_dict(unjsonify_shares))
 
     recovered_secret, authorized_players, invalid_players = \
-        rss.reconstruct_secret(num_players, reconstruction_threshold, len(secret), shares)
+        rss.reconstruct_authenticated_secret(num_players, reconstruction_threshold, len(secret), shares)
     assert verify_results(recovered_secret, secret,
                           authorized_players, shares_subset.keys()[num_broken:],
                           invalid_players, shares_subset.keys()[:num_broken]) is True
@@ -901,7 +901,7 @@ def test_json_parse_make_key_dict_string():
     shares = combine_testing_dictionaries(shares_subset, jsonify_dict(unjsonify_shares))
 
     recovered_secret, authorized_players, invalid_players = \
-        rss.reconstruct_secret(num_players, reconstruction_threshold, len(secret), shares)
+        rss.reconstruct_authenticated_secret(num_players, reconstruction_threshold, len(secret), shares)
     assert verify_results(recovered_secret, secret,
                           authorized_players, shares_subset.keys()[num_broken:],
                           invalid_players, shares_subset.keys()[:num_broken]) is True
@@ -940,7 +940,7 @@ def test_various_parse_errors():
     shares[key_error_player] = key_error_share[:keys_index] + "pown" + key_error_share[keys_index + len("keys"):]
 
     recovered_secret, authorized_players, invalid_players = \
-        rss.reconstruct_secret(num_players, reconstruction_threshold, len(secret), shares)
+        rss.reconstruct_authenticated_secret(num_players, reconstruction_threshold, len(secret), shares)
     dishonest_players = [remove_vectors_player, remove_keys_player, make_share_string_player, json_parse_player, key_error_player]
     assert verify_results(recovered_secret, secret,
                           authorized_players, list(set(players) - set(dishonest_players)),
