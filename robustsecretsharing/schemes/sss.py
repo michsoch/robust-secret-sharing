@@ -9,7 +9,6 @@ def _verify_parameters(num_players, reconstruction_threshold, secret, prime):
     Returns:
         true if num_players, reconstruction_threshold, secret, and prime are validated
     '''
-    # TODO: chat about how this should be handled
     return reconstruction_threshold <= num_players \
         and prime is not None \
         and secret < prime \
@@ -36,7 +35,7 @@ def _share_secret_int(num_players, reconstruction_threshold, max_secret_length, 
         raise ValueError("invalid secret sharing parameters")
 
     # fix n distinct points, alpha_1,...,alpha_n in Z_ps  (public)
-    alphas = [i for i in xrange(1, num_players + 1)]  # TODO: should these be picked arbitrarily to hide n?
+    alphas = [i for i in xrange(1, num_players + 1)]
 
     # choose at random t points, a_1,...,a_t in Z_ps (private)
     #   we will use the a_i values as our coefficients to define the polynomial f(x) = (a_t x^t) + ... + (a_1 x) + s
@@ -85,7 +84,7 @@ def reconstruct_secret(num_players, max_secret_length, shares):
         max_secret_length, the maximum length of the secret represented as a bytestring (ie, len(secret))
         shares, a list of strings - each representing an integer value
     Returns:
-        the bytestring that was shared by share_secret
+        if all given shares are valid, the bytestring that was shared by share_secret
     Raises:
         ValueError, a share was corrupted and attempted reconstruction failed
     '''
