@@ -1,4 +1,5 @@
-# robust-secret-sharing
+# robust-secret-sharing     [![Build Status](https://travis-ci.com/michsoch/robust-secret-sharing.svg?token=LLp1Puu6pzofB9JCSiAR&branch=master)](https://travis-ci.com/michsoch/robust-secret-sharing)
+
 A python library implementing the Rabin Ben-Or Robust Secret Sharing (RSS) scheme: https://cs.umd.edu/~gasarch/TOPICS/secretsharing/rabinVSS.pdf
 
 ## Compatibility
