@@ -1,5 +1,5 @@
 from robustsecretsharing import rss
-from robustsecretsharing import test_authenticated_rss
+from robustsecretsharing.tests import test_authenticated_rss
 
 secret = 'x\x02e\x9c\x9e\x16\xe9\xea\x15+\xbf]\xebx;o\xef\xc9X1c\xaepj\xebj\x12\xe3r\xcd\xeaM'  # An example key
 alt_secret = 'c4bbcb1fbec99d65bf59d85c8cb62ee2db963f0fe106f483d9afa73bd4e39a8a'
